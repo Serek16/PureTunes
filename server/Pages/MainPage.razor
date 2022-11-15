@@ -1,0 +1,54 @@
+﻿@page "/"
+@page "/main-page"
+@layout MainLayout
+@inherits EmyProject.Pages.MainPageComponent
+
+@using Radzen
+@using Radzen.Blazor
+<PageTitle>MainPage </PageTitle>
+<RadzenContent Container="main">
+  <ChildContent>
+    <div style="margin-bottom: 20px" class="row">
+      <div class="col-md-12">
+        <RadzenLabel style="font-style: italic" Text="Lista dostępnych katalogów">
+        </RadzenLabel>
+      </div>
+      <div class="col-md-12 justify-content-between d-flex">
+        <RadzenDropDown Data="@PathCollection" style="width: 500px" TextProperty="Path" ValueProperty="Path" Name="Dropdown0" TValue="dynamic" Change="@Dropdown0Change">
+        </RadzenDropDown>
+        <RadzenButton Disabled="@(Path.Length == 0)" Text="update" Click="@Button0Click">
+        </RadzenButton>
+      </div>
+    </div>
+    <div style="margin-bottom: 20px" class="row">
+      <div class="col-md-12">
+        <RadzenLabel style="font-style: italic" Text="Plik badany">
+        </RadzenLabel>
+      </div>
+      <div class="col-md-12 justify-content-between d-flex">
+        <RadzenTextBox style="width: 500px" @bind-Value="@FilePath" Name="Textbox0">
+        </RadzenTextBox>
+        <RadzenButton Disabled="@(FilePath.Length == 0)" Text="check" Click="@Button1Click">
+        </RadzenButton>
+      </div>
+    </div>
+    <div style="margin-bottom: 20px" class="row">
+      <div class="col-md-12">
+        <RadzenLabel Text="Dopasowanie % (0 - 1)">
+        </RadzenLabel>
+      </div>
+      <div class="col-md-12 justify-content-between d-flex">
+        <RadzenNumeric @bind-Value="@Confidence" Name="Numeric1">
+        </RadzenNumeric>
+        <RadzenButton Text="match" Click="@Button2Click">
+        </RadzenButton>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <RadzenTextArea Disabled="false" style="height: 500px; width: 100%" @bind-Value="@ResultJson" Name="Textarea0">
+        </RadzenTextArea>
+      </div>
+    </div>
+  </ChildContent>
+</RadzenContent>

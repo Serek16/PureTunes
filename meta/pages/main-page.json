@@ -1,0 +1,270 @@
+{
+  "access": "Everybody",
+  "components": [
+    {
+      "components": [
+        {
+          "components": [
+            {
+              "class": "col-md-12",
+              "components": [
+                {
+                  "name": "label0",
+                  "style": {
+                    "fontStyle": "italic"
+                  },
+                  "text": "Lista dostępnych katalogów",
+                  "type": "label"
+                }
+              ],
+              "name": "col1",
+              "type": "col"
+            },
+            {
+              "class": "col-md-12 justify-content-between d-flex",
+              "components": [
+                {
+                  "data": "${PathCollection}",
+                  "events": {
+                    "change": [
+                      {
+                        "name": "Path",
+                        "type": "set",
+                        "value": "${event}",
+                        "valueType": "string"
+                      }
+                    ]
+                  },
+                  "name": "dropdown0",
+                  "style": {
+                    "width": "500px"
+                  },
+                  "textProperty": "Path",
+                  "type": "dropdown",
+                  "valueProperty": "Path"
+                },
+                {
+                  "disabled": "${Path.Length == 0}",
+                  "events": {
+                    "click": [
+                      {
+                        "name": "UpdateEmy",
+                        "schema": {
+                          "$ref": "#/definitions/Task",
+                          "dotnetType": "System.Threading.Tasks.Task"
+                        },
+                        "type": "invoke-method"
+                      }
+                    ]
+                  },
+                  "name": "button0",
+                  "text": "update",
+                  "type": "button"
+                }
+              ],
+              "name": "col0",
+              "type": "col"
+            }
+          ],
+          "name": "row1",
+          "style": {
+            "marginBottom": "20px"
+          },
+          "type": "row"
+        },
+        {
+          "components": [
+            {
+              "class": "col-md-12",
+              "components": [
+                {
+                  "name": "label1",
+                  "style": {
+                    "fontStyle": "italic"
+                  },
+                  "text": "Plik badany",
+                  "type": "label"
+                }
+              ],
+              "name": "col2",
+              "type": "col"
+            },
+            {
+              "class": "col-md-12 justify-content-between d-flex",
+              "components": [
+                {
+                  "name": "textbox0",
+                  "style": {
+                    "width": "500px"
+                  },
+                  "type": "textbox",
+                  "value": "${FilePath}"
+                },
+                {
+                  "disabled": "${FilePath.Length == 0}",
+                  "events": {
+                    "click": [
+                      {
+                        "name": "CheckFile",
+                        "schema": {
+                          "$ref": "#/definitions/Task",
+                          "dotnetType": "System.Threading.Tasks.Task"
+                        },
+                        "type": "invoke-method"
+                      }
+                    ]
+                  },
+                  "name": "button1",
+                  "text": "check",
+                  "type": "button"
+                }
+              ],
+              "name": "col3",
+              "type": "col"
+            }
+          ],
+          "name": "row0",
+          "style": {
+            "marginBottom": "20px"
+          },
+          "type": "row"
+        },
+        {
+          "components": [
+            {
+              "class": "col-md-12",
+              "components": [
+                {
+                  "name": "label2",
+                  "text": "Dopasowanie % (0 - 1)",
+                  "type": "label"
+                }
+              ],
+              "name": "col4",
+              "type": "col"
+            },
+            {
+              "class": "col-md-12 justify-content-between d-flex",
+              "components": [
+                {
+                  "name": "numeric1",
+                  "type": "numeric",
+                  "value": "${Confidence}",
+                  "valueType": "double"
+                },
+                {
+                  "events": {
+                    "click": [
+                      {
+                        "name": "GetResult",
+                        "schema": {
+                          "async": true,
+                          "dotnetType": "System.Threading.Tasks.Task<string>",
+                          "type": "string"
+                        },
+                        "then": [
+                          {
+                            "name": "ResultJson",
+                            "type": "set",
+                            "value": "${result}",
+                            "valueType": "string"
+                          }
+                        ],
+                        "type": "invoke-method"
+                      }
+                    ]
+                  },
+                  "name": "button2",
+                  "text": "match",
+                  "type": "button"
+                }
+              ],
+              "name": "col5",
+              "type": "col"
+            }
+          ],
+          "name": "row2",
+          "style": {
+            "marginBottom": "20px"
+          },
+          "type": "row"
+        },
+        {
+          "components": [
+            {
+              "class": "col-md-12",
+              "components": [
+                {
+                  "disabled": false,
+                  "name": "textarea0",
+                  "style": {
+                    "height": "300px",
+                    "width": "100%"
+                  },
+                  "type": "textarea",
+                  "value": "${ResultJson}"
+                }
+              ],
+              "name": "col6",
+              "type": "col"
+            }
+          ],
+          "name": "row3",
+          "type": "row"
+        }
+      ],
+      "container": "main",
+      "type": "content"
+    }
+  ],
+  "events": {
+    "load": [
+      {
+        "name": "GetCatalog",
+        "schema": {
+          "dotnetType": "System.Collections.Generic.List<EmyProject.CustomService.Model.PathModel>",
+          "items": {
+            "$ref": "#/definitions/PathModel",
+            "dotnetType": "EmyProject.CustomService.Model.PathModel"
+          },
+          "type": "array"
+        },
+        "then": [
+          {
+            "name": "PathCollection",
+            "type": "set",
+            "value": "${result}",
+            "valueType": "List<EmyProject.CustomService.Model.PathModel>"
+          }
+        ],
+        "type": "invoke-method"
+      },
+      {
+        "name": "Path",
+        "type": "set",
+        "value": "string.Empty",
+        "valueType": "string"
+      },
+      {
+        "name": "FilePath",
+        "type": "set",
+        "value": "string.Empty",
+        "valueType": "string"
+      },
+      {
+        "name": "Confidence",
+        "type": "set",
+        "value": "0",
+        "valueType": "double"
+      },
+      {
+        "name": "ResultJson",
+        "type": "set",
+        "value": "string.Empty",
+        "valueType": "string"
+      }
+    ]
+  },
+  "layout": "Main",
+  "name": "MainPage "
+}
