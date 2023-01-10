@@ -1,7 +1,4 @@
-﻿using DocumentFormat.OpenXml.Bibliography;
-using DocumentFormat.OpenXml.Spreadsheet;
-using EmyProject.CustomService.Model;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
+﻿using EmyProject.CustomService.Model;
 using Microsoft.Extensions.Configuration;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
@@ -10,8 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using Xabe.FFmpeg;
 
 namespace EmyProject.CustomService
 {
@@ -19,13 +15,14 @@ namespace EmyProject.CustomService
     {
         private readonly IConfiguration configuration;
         private string outPath;
+
         public AudioService(IConfiguration _configuration)
         {
             configuration = _configuration;
             outPath = configuration["outPath"];
         }
 
-        public void FileGenerate(List<ResultEntry> result, string file)
+        public async void FileGenerate(List<ResultEntry> result, string file)
         {
             var directory = outPath + "\\" + DateTime.Now.ToString("MMdd.hhmmss");
             //Tworzenie katalogu
@@ -35,23 +32,39 @@ namespace EmyProject.CustomService
 
             List<ConvertModel> list = new List<ConvertModel>();
 
-            for (int i = 0; i < result.Count; i++)
+            list.Add(new ConvertModel
             {
-                if (i == 0)
+                Start = 0,
+                End = result[0].QueryMatchStartsAt - 0.15,
+                CommercialEnd = result[0].QueryMatchStartsAt + result[0].DiscreteTrackCoverageLength + 0.15
+            });
+
+            for (int i = 1; i < result.Count; i++)
+            {
+                list.Add(new ConvertModel
                 {
-                    list.Add(new ConvertModel { Start = 0, End = result[i].QueryMatchStartsAt, RealEnd = result[i].QueryMatchStartsAt + result[i].Track.Length -result[i].TrackStartsAt });
-                }
-                else
-                {
-                    list.Add(new ConvertModel { Start = list.Last().RealEnd, End = result[i].QueryMatchStartsAt, RealEnd = result[i].QueryMatchStartsAt + result[i].Track.Length - result[i].TrackStartsAt });
-                }
+                    Start = list.Last().CommercialEnd,
+                    End = result[i].QueryMatchStartsAt - 0.15,
+                    CommercialEnd = result[i].QueryMatchStartsAt + result[i].DiscreteTrackCoverageLength + 0.15
+                });
             }
 
-            list.Add(new ConvertModel { Start = list.Last().RealEnd, RealEnd = 0, End = Lenght});
+            list.Add(new ConvertModel
+            {
+                Start = list.Last().CommercialEnd,
+                End = Lenght
+            });
 
+            var mediaInfo = await Xabe.FFmpeg.FFmpeg.GetMediaInfo(file);
             foreach (var item in list)
             {
-                TrimWavFile(file, directory + "\\" + list.IndexOf(item) + ".wav", TimeSpan.FromSeconds(item.Start), TimeSpan.FromSeconds(Lenght - item.End));
+                // TrimWavFile(file, directory + "\\" + list.IndexOf(item) + ".wav", TimeSpan.FromSeconds(item.Start), TimeSpan.FromSeconds(Lenght - item.End));
+                await Xabe.FFmpeg.FFmpeg.Conversions.New()
+                    .AddStream(mediaInfo.Streams)
+                    .AddParameter(
+                        $"-ss {TimeSpan.FromSeconds(item.Start)} -t {TimeSpan.FromSeconds(item.End - item.Start)}")
+                    .SetOutput(directory + "\\" + list.IndexOf(item) + ".wav")
+                    .Start();
             }
 
             if (list.Count > 0)
@@ -88,6 +101,7 @@ namespace EmyProject.CustomService
                 }
             }
         }
+
         private void TrimWavFile(WaveFileReader reader, WaveFileWriter writer, int startPos, int endPos)
         {
             reader.Position = startPos;

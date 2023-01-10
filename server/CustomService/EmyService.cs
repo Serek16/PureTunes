@@ -160,7 +160,7 @@ namespace EmyProject.CustomService
                     }
                 }
             }
-            return matches.OrderBy(x => x.Confidence).ToList();
+            return matches.OrderBy(x => x.QueryMatchStartsAt).ToList();
         }
     }
 }
