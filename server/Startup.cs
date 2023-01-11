@@ -1,22 +1,12 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Net.Http;
-using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.EntityFrameworkCore;
 
 using Radzen;
 using EmyProject.CustomService;
@@ -32,14 +22,8 @@ namespace EmyProject
 
         public IConfiguration Configuration { get; }
 
-        partial void OnConfigureServices(IServiceCollection services);
-
-        partial void OnConfiguringServices(IServiceCollection services);
-
         public void ConfigureServices(IServiceCollection services)
         {
-            OnConfiguringServices(services);
-
             services.AddHttpContextAccessor();
             services.AddScoped<HttpClient>(serviceProvider =>
             {
@@ -67,15 +51,18 @@ namespace EmyProject
             services.AddScoped<EmyService>();
             services.AddScoped<AudioService>();
 
-            OnConfigureServices(services);
+            services.AddLogging(builder =>
+            {
+                builder.AddSimpleConsole(options =>
+                {
+                    options.SingleLine = true;
+                    options.TimestampFormat = "HH:mm:ss ";
+                });
+            });
         }
-
-        partial void OnConfigure(IApplicationBuilder app, IWebHostEnvironment env);
-        partial void OnConfiguring(IApplicationBuilder app, IWebHostEnvironment env);
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            OnConfiguring(app, env);
             if (env.IsDevelopment())
             {
                 Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
@@ -98,8 +85,6 @@ namespace EmyProject
                 endpoints.MapBlazorHub();
                 endpoints.MapFallbackToPage("/_Host");
             });
-
-            OnConfigure(app, env);
         }
     }
 
