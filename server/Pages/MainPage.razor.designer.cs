@@ -15,11 +15,6 @@ namespace EmyProject.Pages
         [Parameter(CaptureUnmatchedValues = true)]
         public IReadOnlyDictionary<string, dynamic> Attributes { get; set; }
 
-        public void Reload()
-        {
-            InvokeAsync(StateHasChanged);
-        }
-
         [Inject]
         protected IJSRuntime JSRuntime { get; set; }
 
@@ -37,101 +32,22 @@ namespace EmyProject.Pages
 
         [Inject]
         protected NotificationService NotificationService { get; set; }
+        
+        protected List<EmyProject.CustomService.Model.PathModel> PathCollection { get; set; }
 
-        List<EmyProject.CustomService.Model.PathModel> _PathCollection;
-        protected List<EmyProject.CustomService.Model.PathModel> PathCollection
-        {
-            get
-            {
-                return _PathCollection;
-            }
-            set
-            {
-                if (!object.Equals(_PathCollection, value))
-                {
-                    var args = new PropertyChangedEventArgs(){ Name = "PathCollection", NewValue = value, OldValue = _PathCollection };
-                    _PathCollection = value;
-                    Reload();
-                }
-            }
-        }
-
-        string _Path;
-        protected string Path
-        {
-            get
-            {
-                return _Path;
-            }
-            set
-            {
-                if (!object.Equals(_Path, value))
-                {
-                    var args = new PropertyChangedEventArgs(){ Name = "Path", NewValue = value, OldValue = _Path };
-                    _Path = value;
-                    Reload();
-                }
-            }
-        }
-
-        string _FilePath;
-        protected string FilePath
-        {
-            get
-            {
-                return _FilePath;
-            }
-            set
-            {
-                if (!object.Equals(_FilePath, value))
-                {
-                    var args = new PropertyChangedEventArgs(){ Name = "FilePath", NewValue = value, OldValue = _FilePath };
-                    _FilePath = value;
-                    Reload();
-                }
-            }
-        }
-
-        double _Confidence;
-        protected double Confidence
-        {
-            get
-            {
-                return _Confidence;
-            }
-            set
-            {
-                if (!object.Equals(_Confidence, value))
-                {
-                    var args = new PropertyChangedEventArgs(){ Name = "Confidence", NewValue = value, OldValue = _Confidence };
-                    _Confidence = value;
-                    Reload();
-                }
-            }
-        }
-
-        string _ResultJson;
-        protected string ResultJson
-        {
-            get
-            {
-                return _ResultJson;
-            }
-            set
-            {
-                if (!object.Equals(_ResultJson, value))
-                {
-                    var args = new PropertyChangedEventArgs(){ Name = "ResultJson", NewValue = value, OldValue = _ResultJson };
-                    _ResultJson = value;
-                    Reload();
-                }
-            }
-        }
+        protected string Path { get; set; }
+        
+        protected string FilePath { get; set; }
+        
+        protected double Confidence { get; set; }
+        
+        protected string ResultJson { get; set; }
 
         protected override async System.Threading.Tasks.Task OnInitializedAsync()
         {
             await Load();
         }
+        
         protected async System.Threading.Tasks.Task Load()
         {
             var getCatalogResult = GetCatalog();
@@ -141,7 +57,7 @@ namespace EmyProject.Pages
 
             FilePath = string.Empty;
 
-            Confidence = 0;
+            Confidence = 80; // Suggested optimal confidence value.
 
             ResultJson = string.Empty;
         }

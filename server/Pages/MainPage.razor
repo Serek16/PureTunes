@@ -34,11 +34,11 @@
     </div>
     <div style="margin-bottom: 20px" class="row">
       <div class="col-md-12">
-        <RadzenLabel Text="Dopasowanie % (0 - 1)">
+        <RadzenLabel Text="Dopasowanie %">
         </RadzenLabel>
       </div>
       <div class="col-md-12 justify-content-between d-flex">
-        <RadzenNumeric @bind-Value="@Confidence" Name="Numeric1">
+        <RadzenNumeric @bind-Value="@Confidence" Name="Numeric1" Min="0" Max="100">
         </RadzenNumeric>
         <RadzenButton Text="match" Click="@Button2Click">
         </RadzenButton>
