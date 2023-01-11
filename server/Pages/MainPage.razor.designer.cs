@@ -20,10 +20,6 @@ namespace EmyProject.Pages
             InvokeAsync(StateHasChanged);
         }
 
-        public void OnPropertyChanged(PropertyChangedEventArgs args)
-        {
-        }
-
         [Inject]
         protected IJSRuntime JSRuntime { get; set; }
 
@@ -55,7 +51,6 @@ namespace EmyProject.Pages
                 {
                     var args = new PropertyChangedEventArgs(){ Name = "PathCollection", NewValue = value, OldValue = _PathCollection };
                     _PathCollection = value;
-                    OnPropertyChanged(args);
                     Reload();
                 }
             }
@@ -74,7 +69,6 @@ namespace EmyProject.Pages
                 {
                     var args = new PropertyChangedEventArgs(){ Name = "Path", NewValue = value, OldValue = _Path };
                     _Path = value;
-                    OnPropertyChanged(args);
                     Reload();
                 }
             }
@@ -93,7 +87,6 @@ namespace EmyProject.Pages
                 {
                     var args = new PropertyChangedEventArgs(){ Name = "FilePath", NewValue = value, OldValue = _FilePath };
                     _FilePath = value;
-                    OnPropertyChanged(args);
                     Reload();
                 }
             }
@@ -112,7 +105,6 @@ namespace EmyProject.Pages
                 {
                     var args = new PropertyChangedEventArgs(){ Name = "Confidence", NewValue = value, OldValue = _Confidence };
                     _Confidence = value;
-                    OnPropertyChanged(args);
                     Reload();
                 }
             }
@@ -131,7 +123,6 @@ namespace EmyProject.Pages
                 {
                     var args = new PropertyChangedEventArgs(){ Name = "ResultJson", NewValue = value, OldValue = _ResultJson };
                     _ResultJson = value;
-                    OnPropertyChanged(args);
                     Reload();
                 }
             }

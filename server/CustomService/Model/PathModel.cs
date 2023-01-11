@@ -1,7 +1,6 @@
-﻿namespace EmyProject.CustomService.Model
+﻿namespace EmyProject.CustomService.Model;
+
+public class PathModel
 {
-    public class PathModel
-    {
-        public string Path { get; set; }
-    }
+    public string Path { get; set; }
 }

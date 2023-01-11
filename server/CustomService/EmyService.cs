@@ -13,154 +13,162 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace EmyProject.CustomService
+namespace EmyProject.CustomService;
+
+public class EmyService
 {
-    public class EmyService
+    private readonly string _datasetPath;
+
+    private readonly NotificationService _notificationService;
+
+    private readonly EmyModelService _modelService;
+    private readonly IAudioService _audioService;
+
+    public List<PathModel> DatasetDirList { get; } = new List<PathModel>();
+
+    public EmyService(IConfiguration configuration, NotificationService notificationService)
     {
-        private readonly IConfiguration configuration;
-        private readonly NotificationService notificationService;
-        private string datasetPath;
+        _datasetPath = configuration["Dataset"];
 
-        private readonly EmyModelService ModelService;
-        private readonly IAudioService AudioService;
+        _notificationService = notificationService;
 
-        public List<PathModel> list = new List<PathModel>();
-        public EmyService(IConfiguration _configuration, NotificationService _notificationService)
+        _modelService = EmyModelService.NewInstance("localhost", 3399);
+        _audioService = new SoundFingerprintingAudioService();
+
+        CheckDataset();
+    }
+
+    private void CheckDataset()
+    {
+        if (!Directory.Exists(_datasetPath))
         {
-            configuration = _configuration;
-            notificationService = _notificationService;
-            datasetPath = configuration["Dataset"];
-
-            ModelService = EmyModelService.NewInstance("localhost", 3399);
-            AudioService = new SoundFingerprintingAudioService();
-
-            CheckDataset();
+            _notificationService.Notify(new NotificationMessage
+                { Duration = 2000, Severity = NotificationSeverity.Error, Summary = "Katalog nie istnieje!" });
         }
-
-        private void CheckDataset()
+        else
         {
-            //Sprawdzanie czy istnieje katalog.
-            if (!Directory.Exists(datasetPath))
+            // Check if the directory contains subdirectories with audio files.
+            if (Directory.GetDirectories(_datasetPath).Length == 0)
             {
-                notificationService.Notify(new NotificationMessage { Duration = 2000, Severity = NotificationSeverity.Error, Summary = "Katalog nie istnieje!" });
+                _notificationService.Notify(new NotificationMessage
+                    { Duration = 2000, Severity = NotificationSeverity.Error, Summary = "Brak katalogów dataset!" });
             }
             else
             {
-                //Sprawdzanie czy katalog zawiera podkatalogi z utworami.
-                if (Directory.GetDirectories(datasetPath).Length == 0)
+                foreach (var catalog in Directory.GetDirectories(_datasetPath).ToList())
                 {
-                    notificationService.Notify(new NotificationMessage { Duration = 2000, Severity = NotificationSeverity.Error, Summary = "Brak katalogów dataset!" });
-                }
-                else
-                {
-                    foreach (var catalog in Directory.GetDirectories(datasetPath).ToList())
+                    foreach (var file in Directory.GetFiles(catalog).ToList())
                     {
-                        foreach (var file in Directory.GetFiles(catalog).ToList())
+                        if (Path.GetExtension(file) == ".wav")
                         {
-                            if (Path.GetExtension(file) == ".wav")
-                            {
-                                //Przypisanie listy katalogów do listy "list" po znalezieniu przynajmniej 1 pliku wav.
-                                list.Add(new PathModel {  Path = catalog });
-                                break;
-                            }
+                            // Add subdirectory to DatasetDirList if a subdirectory contains at least 1 .wav file. 
+                            DatasetDirList.Add(new PathModel { Path = catalog });
+                            break;
                         }
                     }
                 }
             }
+        }
+    }
+    
+    // Function returns file length.
+    private double GetWavFileDuration(string fileName)
+    {
+        using var wf = new WaveFileReader(fileName);
+        return wf.TotalTime.TotalSeconds;
+    }
+
+    public async Task AddDataset(string path)
+    {
+        // Delete all existing datasets from EmySound database.
+        foreach (var item in _modelService.ReadAllTracks())
+        {
+            _modelService.DeleteTrack(item.Id);
         }
         
-        //Funkcja zwracająca długośc pliku.
-        public double GetWavFileDuration(string fileName)
+        // Iterate through all files.
+        foreach (string file in Directory.GetFiles(path))
         {
-            using (var wf = new WaveFileReader(fileName))
+            // Check if the existing file has .wav extension and if it is at least 2 seconds long.
+            if (Path.GetExtension(file) == ".wav")
             {
-                return wf.TotalTime.TotalSeconds;
-            }
-        }
-
-        public async Task AddDataset(string path)
-        {
-            //Usunięcie wszystkich istniejacych dataset z bazy EmySound.
-            foreach (var item in ModelService.ReadAllTracks())
-            {
-                ModelService.DeleteTrack(item.Id);
-            }
-
-            //Iteracja po wszystkich plikach.
-            foreach (string file in Directory.GetFiles(path))
-            {
-                //Sprawdzanie czy plik jest w formacie "wav" oraz czy jego długośc przekracza 2 sekundy.
-                if (Path.GetExtension(file) == ".wav")
+                if (GetWavFileDuration(file) >= 2)
                 {
-                    if (GetWavFileDuration(file) >= 2)
+                    try
                     {
-                        try
+                        var track = new TrackInfo(file, Path.GetFileNameWithoutExtension(file), string.Empty);
+                        var hashes = await FingerprintCommandBuilder
+                            .Instance
+                            .BuildFingerprintCommand()
+                            .From(file)
+                            .UsingServices(_audioService)
+                            .Hash();
+                        
+                        // Add file to the EmySound database.
+                        _modelService.Insert(track, hashes);
+                        _notificationService.Notify(new NotificationMessage
                         {
-                            var track = new TrackInfo(file, Path.GetFileNameWithoutExtension(file), string.Empty);
-                            var hashes = await FingerprintCommandBuilder
-                                .Instance
-                                .BuildFingerprintCommand()
-                                .From(file)
-                                .UsingServices(AudioService)
-                                .Hash();
-
-                            //Wstawienie pliku do bazy EmySound.
-                            ModelService.Insert(track, hashes);
-                            notificationService.Notify(new NotificationMessage { Duration = 1000, Severity = NotificationSeverity.Success, Summary = $"Wstawiono plik {file} z {hashes.Count} odciskami." });
-                        }
-                        catch (Exception e)
-                        {
-                            notificationService.Notify(new NotificationMessage { Duration = 1000, Severity = NotificationSeverity.Error, Summary = e.Message });
-                        }
+                            Duration = 1000, Severity = NotificationSeverity.Success,
+                            Summary = $"Wstawiono plik {file} z {hashes.Count} odciskami."
+                        });
+                    }
+                    catch (Exception e)
+                    {
+                        _notificationService.Notify(new NotificationMessage
+                            { Duration = 1000, Severity = NotificationSeverity.Error, Summary = e.Message });
                     }
                 }
             }
         }
-
-        //Sprawdzanie czy plik istnieje.
-        public async Task FileExists(string file)
+    }
+    
+    public async Task FileExists(string file)
+    {
+        if (File.Exists(file))
         {
-            if (File.Exists(file))
+            if (Path.GetExtension(file) == ".wav")
             {
-                //Sprawdzanie czy ma odpowiedni format.
-                if (Path.GetExtension(file) == ".wav")
-                {
-                    notificationService.Notify(new NotificationMessage { Duration = 1000, Severity = NotificationSeverity.Success, Summary = "Plik poprawny!" });
-                }
-                else
-                {
-                    notificationService.Notify(new NotificationMessage { Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Niepoprawne rozszerzenie pliku!" });
-                }
+                _notificationService.Notify(new NotificationMessage
+                    { Duration = 1000, Severity = NotificationSeverity.Success, Summary = "Plik poprawny!" });
             }
             else
             {
-                notificationService.Notify(new NotificationMessage { Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Plik nie istnieje!" });
+                _notificationService.Notify(new NotificationMessage
+                {
+                    Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Niepoprawne rozszerzenie pliku!"
+                });
             }
         }
-
-        //Funkcja do sprawdzania czy utwór zwiera pasujące wzorce.
-        public async Task<List<ResultEntry>> FindMatches(string file, double confidence)
+        else
         {
-            var result = await QueryCommandBuilder.Instance
+            _notificationService.Notify(new NotificationMessage
+                { Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Plik nie istnieje!" });
+        }
+    }
+    
+    // Function checks whether audio contains matching patterns.
+    public async Task<List<ResultEntry>> FindMatches(string file, double confidence)
+    {
+        var result = await QueryCommandBuilder.Instance
             .BuildQueryCommand()
             .From(file)
-            .UsingServices(ModelService, AudioService)
+            .UsingServices(_modelService, _audioService)
             .Query();
 
-            List<ResultEntry> matches = new List<ResultEntry>();
+        List<ResultEntry> matches = new List<ResultEntry>();
 
-            if (result.ContainsMatches)
+        if (result.ContainsMatches)
+        {
+            foreach (var (entry, _) in result.ResultEntries)
             {
-                foreach (var (entry, _) in result.ResultEntries)
+                // The condition for checking the minimum % of result.
+                if (entry?.Confidence > confidence)
                 {
-                    //Warunek sprawdzania minimalnego % rezulatutu.
-                    if (entry?.Confidence > confidence)
-                    {
-                        matches.Add(entry);
-                    }
+                    matches.Add(entry);
                 }
             }
-            return matches.OrderBy(x => x.QueryMatchStartsAt).ToList();
         }
+
+        return matches.OrderBy(x => x.QueryMatchStartsAt).ToList();
     }
 }
