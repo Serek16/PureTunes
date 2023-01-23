@@ -29,21 +29,16 @@ public class AudioService
         Directory.CreateDirectory(directory);
 
         List<ConvertModel> list = new List<ConvertModel>();
+        
+        const double timeOffset = 0;
 
-        list.Add(new ConvertModel
-        {
-            Start = 0,
-            End = result[0].QueryMatchStartsAt - 0.15,
-            CommercialEnd = result[0].QueryMatchStartsAt + result[0].DiscreteTrackCoverageLength + 0.15
-        });
-
-        for (int i = 1; i < result.Count; i++)
+        foreach (var resultEntry in result)
         {
             list.Add(new ConvertModel
             {
-                Start = list.Last().CommercialEnd,
-                End = result[i].QueryMatchStartsAt - 0.15,
-                CommercialEnd = result[i].QueryMatchStartsAt + result[i].DiscreteTrackCoverageLength + 0.15
+                Start = list.Any() ? list.Last().CommercialEnd : 0,
+                End = resultEntry.QueryMatchStartsAt - timeOffset,
+                CommercialEnd = resultEntry.QueryMatchStartsAt + resultEntry.DiscreteTrackCoverageLength + timeOffset
             });
         }
 
@@ -85,6 +80,6 @@ public class AudioService
             WaveFileWriter.CreateWaveFile16(directory + "\\result.wav", playlist);
         }
         
-        _logger.LogInformation("The result has been generated.");
+        _logger.LogInformation("The result has been generated and saved to file result.wav.");
     }
 }
