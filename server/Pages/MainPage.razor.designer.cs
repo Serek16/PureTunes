@@ -6,6 +6,8 @@ using EmyProject.CustomService.Model;
 using Microsoft.JSInterop;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Radzen;
 using Radzen.Blazor;
 
@@ -18,21 +20,11 @@ public partial class MainPageComponent : ComponentBase
 
     [Inject]
     protected IJSRuntime JSRuntime { get; set; }
-
-    [Inject]
-    protected NavigationManager UriHelper { get; set; }
-
-    [Inject]
-    protected DialogService DialogService { get; set; }
-
-    [Inject]
-    protected TooltipService TooltipService { get; set; }
-
-    [Inject]
-    protected ContextMenuService ContextMenuService { get; set; }
-
+    
     [Inject]
     protected NotificationService NotificationService { get; set; }
+    
+    [Inject] protected IConfiguration Configuration { get; set; }
 
     protected string DirectoryPath { get; set; }
 
@@ -48,15 +40,22 @@ public partial class MainPageComponent : ComponentBase
 
     protected string ResultJson { get; set; }
 
+    private string _datasetPath;
+    
+    private string _examinedFileDirectoryPath;
+
     protected async System.Threading.Tasks.Task Load()
     {
+        _datasetPath = Configuration["Dataset"];
+        _examinedFileDirectoryPath = Configuration["ExaminedFileDataset"];
+        
         DirectoryPath = string.Empty;
         
         DirectoryPathCollection = GetDirectories();
 
         FilePath = string.Empty;
 
-        ExaminedFilePathList = GetExaminedFilePathList();
+        ExaminedFilePathList = GetExaminedFiles();
 
         Confidence = 80; // Suggested optimal confidence value.
 

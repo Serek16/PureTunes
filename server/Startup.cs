@@ -40,10 +40,9 @@ public class Startup
         services.AddRazorPages();
         services.AddServerSideBlazor().AddHubOptions(o => { o.MaximumReceiveMessageSize = 10 * 1024 * 1024; });
 
-        services.AddScoped<DialogService>();
+        services.AddSingleton(Configuration);
+        
         services.AddScoped<NotificationService>();
-        services.AddScoped<TooltipService>();
-        services.AddScoped<ContextMenuService>();
         services.AddScoped<EmyService>();
         services.AddScoped<AudioService>();
 

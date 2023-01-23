@@ -1,6 +1,4 @@
-﻿using EmyProject.CustomService.Model;
-using Microsoft.Extensions.Configuration;
-using NAudio.Wave;
+﻿using NAudio.Wave;
 using Radzen;
 using SoundFingerprinting.Audio;
 using SoundFingerprinting.Builder;
@@ -18,86 +16,19 @@ namespace EmyProject.CustomService;
 
 public class EmyService
 {
-    private readonly string _datasetPath;
-    private readonly string _examinedFileDirectoryPath;
-
     private readonly ILogger<EmyService> _logger;
     private readonly NotificationService _notificationService;
 
     private readonly EmyModelService _modelService;
     private readonly IAudioService _audioService;
 
-    public List<PathModel> DatasetDirList { get; } = new List<PathModel>();
-    public List<PathModel> ExaminedFileList { get; } = new List<PathModel>();
-
-    public EmyService(IConfiguration configuration, NotificationService notificationService, ILogger<EmyService> logger)
+    public EmyService(NotificationService notificationService, ILogger<EmyService> logger)
     {
-        _datasetPath = configuration["Dataset"];
-        _examinedFileDirectoryPath = configuration["ExaminedFileDataset"];
-
         _notificationService = notificationService;
         _logger = logger;
 
         _modelService = EmyModelService.NewInstance("localhost", 3399);
         _audioService = new SoundFingerprintingAudioService();
-
-        CheckDataset();
-        UpdateExaminedFileDirectory();
-    }
-
-    private void CheckDataset()
-    {
-        if (!Directory.Exists(_datasetPath))
-        {
-            _logger.LogError("Directory \"{DatasetPath}\" doesn't exist.", _datasetPath);
-            _notificationService.Notify(new NotificationMessage
-                { Duration = 2000, Severity = NotificationSeverity.Error, Summary = "Katalog nie istnieje!" });
-        }
-        else
-        {
-            // Check if the directory contains subdirectories with audio files.
-            if (Directory.GetDirectories(_datasetPath).Length == 0)
-            {
-                _logger.LogError("Directory \"{DatasetPath}\" doesn't contain any subdirectories.", _datasetPath);
-                _notificationService.Notify(new NotificationMessage
-                    { Duration = 2000, Severity = NotificationSeverity.Error, Summary = "Brak katalogów dataset!" });
-
-                return;
-            }
-
-            foreach (var catalog in Directory.GetDirectories(_datasetPath).ToList())
-            {
-                foreach (var file in Directory.GetFiles(catalog).ToList())
-                {
-                    if (Path.GetExtension(file) == ".wav")
-                    {
-                        // Add subdirectory to DatasetDirList if a subdirectory contains at least 1 .wav file. 
-                        DatasetDirList.Add(new PathModel(catalog));
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    private void UpdateExaminedFileDirectory()
-    {
-        if (!Directory.Exists(_examinedFileDirectoryPath))
-        {
-            _logger.LogError("Directory \"{ExaminedFilePathDataset}\" doesn't exist.", _examinedFileDirectoryPath);
-            _notificationService.Notify(new NotificationMessage
-                { Duration = 2000, Severity = NotificationSeverity.Error, Summary = "Katalog nie istnieje!" });
-
-            return;
-        }
-
-        foreach (var file in Directory.GetFiles(_examinedFileDirectoryPath).ToList())
-        {
-            if (Path.GetExtension(file) == ".wav")
-            {
-                ExaminedFileList.Add(new PathModel(file));
-            }
-        }
     }
 
     // Function returns file length.
