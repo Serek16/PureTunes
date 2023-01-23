@@ -33,17 +33,21 @@ public partial class MainPageComponent
 
     private async Task<string> GetResult()
     {
-        if (!await EmyService.IsFilePathCorrect(FilePath))
+        if (!(await EmyService.ReadAllLoadedTracks()).Any())
         {
             Logger.LogError(
-                "Invalid file path. Please provide a valid file path - {FilePath}. File needs to have WAV format",
-                FilePath);
+                "Emy Sound database is empty. Please provide at least one track.");
             NotificationService.Notify(new NotificationMessage
-                { Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Plik nie istnieje!" });
-            
+                { Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Baza Emy Sound jest pustya!" });
+
             return string.Empty;
         }
-        
+
+        if (!await EmyService.IsFilePathCorrect(FilePath))
+        {
+            return string.Empty;
+        }
+
         Logger.LogInformation("Started processing files.");
         NotificationService.Notify(new NotificationMessage
             { Duration = 1000, Severity = NotificationSeverity.Success, Summary = "Rozpoczęto procesowanie plików!" });

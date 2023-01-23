@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using SoundFingerprinting.DAO.Data;
 
 namespace EmyProject.CustomService;
 
@@ -29,6 +30,8 @@ public class EmyService
 
         _modelService = EmyModelService.NewInstance("localhost", 3399);
         _audioService = new SoundFingerprintingAudioService();
+        
+        EmptyEmySoundDatabase();
     }
 
     // Function returns file length.
@@ -41,11 +44,7 @@ public class EmyService
     // Function fingerprints tracks and them to the Emy database for further examination.
     public async Task AddDataset(string path)
     {
-        // Delete all existing datasets from EmySound database.
-        foreach (var item in _modelService.ReadAllTracks())
-        {
-            _modelService.DeleteTrack(item.Id);
-        }
+        EmptyEmySoundDatabase();
 
         // Iterate through all files.
         foreach (string file in Directory.GetFiles(path))
@@ -86,6 +85,15 @@ public class EmyService
         }
     }
 
+    private void EmptyEmySoundDatabase()
+    {
+        // Delete all existing datasets from EmySound database.
+        foreach (var item in _modelService.ReadAllTracks())
+        {
+            _modelService.DeleteTrack(item.Id);
+        }
+    }
+    
     public async Task<bool> IsFilePathCorrect(string file)
     {
         if (File.Exists(file))
@@ -143,5 +151,10 @@ public class EmyService
         _logger.LogInformation("Found {MatchesCount} matches.", matches.Count);
 
         return matches.OrderBy(x => x.QueryMatchStartsAt).ToList();
+    }
+
+    public async Task<IEnumerable<TrackData>> ReadAllLoadedTracks()
+    {
+        return _modelService.ReadAllTracks();
     }
 }
