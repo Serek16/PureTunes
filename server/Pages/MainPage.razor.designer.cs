@@ -2,85 +2,94 @@
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using EmyProject.CustomService.Model;
 using Microsoft.JSInterop;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Radzen;
 using Radzen.Blazor;
 
-namespace EmyProject.Pages
+namespace EmyProject.Pages;
+
+public partial class MainPageComponent : ComponentBase
 {
-    public partial class MainPageComponent : ComponentBase
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IReadOnlyDictionary<string, dynamic> Attributes { get; set; }
+
+    [Inject]
+    protected IJSRuntime JSRuntime { get; set; }
+
+    [Inject]
+    protected NavigationManager UriHelper { get; set; }
+
+    [Inject]
+    protected DialogService DialogService { get; set; }
+
+    [Inject]
+    protected TooltipService TooltipService { get; set; }
+
+    [Inject]
+    protected ContextMenuService ContextMenuService { get; set; }
+
+    [Inject]
+    protected NotificationService NotificationService { get; set; }
+
+    protected string DirectoryPath { get; set; }
+
+    protected List<PathModel> DirectoryPathCollection { get; set; }
+    
+    protected List<PathModel> FilePathCollection { get; set; } 
+    
+    protected string FilePath { get; set; }
+
+    protected List<PathModel> ExaminedFilePathList { get; set; }
+
+    protected double Confidence { get; set; }
+
+    protected string ResultJson { get; set; }
+
+    protected async System.Threading.Tasks.Task Load()
     {
-        [Parameter(CaptureUnmatchedValues = true)]
-        public IReadOnlyDictionary<string, dynamic> Attributes { get; set; }
-
-        [Inject]
-        protected IJSRuntime JSRuntime { get; set; }
-
-        [Inject]
-        protected NavigationManager UriHelper { get; set; }
-
-        [Inject]
-        protected DialogService DialogService { get; set; }
-
-        [Inject]
-        protected TooltipService TooltipService { get; set; }
-
-        [Inject]
-        protected ContextMenuService ContextMenuService { get; set; }
-
-        [Inject]
-        protected NotificationService NotificationService { get; set; }
+        DirectoryPath = string.Empty;
         
-        protected List<EmyProject.CustomService.Model.PathModel> PathCollection { get; set; }
+        DirectoryPathCollection = GetDirectories();
 
-        protected string Path { get; set; }
-        
-        protected string FilePath { get; set; }
-        
-        protected double Confidence { get; set; }
-        
-        protected string ResultJson { get; set; }
+        FilePath = string.Empty;
 
-        protected override async System.Threading.Tasks.Task OnInitializedAsync()
-        {
-            await Load();
-        }
-        
-        protected async System.Threading.Tasks.Task Load()
-        {
-            var getCatalogResult = GetCatalog();
-            PathCollection = getCatalogResult;
+        ExaminedFilePathList = GetExaminedFilePathList();
 
-            Path = string.Empty;
+        Confidence = 80; // Suggested optimal confidence value.
 
-            FilePath = string.Empty;
+        ResultJson = string.Empty;
+    }
+    
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        await Load();
+    }
 
-            Confidence = 80; // Suggested optimal confidence value.
+    protected async System.Threading.Tasks.Task Dropdown0Change(dynamic args)
+    {
+        DirectoryPath = args;
+    }
 
-            ResultJson = string.Empty;
-        }
+    protected async System.Threading.Tasks.Task Button0Click(MouseEventArgs args)
+    {
+        await UpdateEmy();
+    }
 
-        protected async System.Threading.Tasks.Task Dropdown0Change(dynamic args)
-        {
-            Path = args;
-        }
+    protected async System.Threading.Tasks.Task Dropdown1Change(dynamic args)
+    {
+        FilePath = args;
+    }
+    
+    protected async System.Threading.Tasks.Task Button1Click(MouseEventArgs args)
+    {
+        await CheckFile();
+    }
 
-        protected async System.Threading.Tasks.Task Button0Click(MouseEventArgs args)
-        {
-            await UpdateEmy();
-        }
-
-        protected async System.Threading.Tasks.Task Button1Click(MouseEventArgs args)
-        {
-            await CheckFile();
-        }
-
-        protected async System.Threading.Tasks.Task Button2Click(MouseEventArgs args)
-        {
-            var getResultResult = await GetResult();
-            ResultJson = getResultResult;
-        }
+    protected async System.Threading.Tasks.Task Button2Click(MouseEventArgs args)
+    {
+        ResultJson = await GetResult();
     }
 }

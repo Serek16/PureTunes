@@ -19,6 +19,7 @@ namespace EmyProject.CustomService;
 public class EmyService
 {
     private readonly string _datasetPath;
+    private readonly string _examinedFileDirectoryPath;
 
     private readonly ILogger<EmyService> _logger;
     private readonly NotificationService _notificationService;
@@ -27,10 +28,12 @@ public class EmyService
     private readonly IAudioService _audioService;
 
     public List<PathModel> DatasetDirList { get; } = new List<PathModel>();
+    public List<PathModel> ExaminedFileList { get; } = new List<PathModel>();
 
     public EmyService(IConfiguration configuration, NotificationService notificationService, ILogger<EmyService> logger)
     {
         _datasetPath = configuration["Dataset"];
+        _examinedFileDirectoryPath = configuration["ExaminedFileDataset"];
 
         _notificationService = notificationService;
         _logger = logger;
@@ -39,6 +42,7 @@ public class EmyService
         _audioService = new SoundFingerprintingAudioService();
 
         CheckDataset();
+        UpdateExaminedFileDirectory();
     }
 
     private void CheckDataset()
@@ -57,21 +61,41 @@ public class EmyService
                 _logger.LogError("Directory \"{DatasetPath}\" doesn't contain any subdirectories.", _datasetPath);
                 _notificationService.Notify(new NotificationMessage
                     { Duration = 2000, Severity = NotificationSeverity.Error, Summary = "Brak katalogów dataset!" });
+
+                return;
             }
-            else
+
+            foreach (var catalog in Directory.GetDirectories(_datasetPath).ToList())
             {
-                foreach (var catalog in Directory.GetDirectories(_datasetPath).ToList())
+                foreach (var file in Directory.GetFiles(catalog).ToList())
                 {
-                    foreach (var file in Directory.GetFiles(catalog).ToList())
+                    if (Path.GetExtension(file) == ".wav")
                     {
-                        if (Path.GetExtension(file) == ".wav")
-                        {
-                            // Add subdirectory to DatasetDirList if a subdirectory contains at least 1 .wav file. 
-                            DatasetDirList.Add(new PathModel { Path = catalog });
-                            break;
-                        }
+                        // Add subdirectory to DatasetDirList if a subdirectory contains at least 1 .wav file. 
+                        DatasetDirList.Add(new PathModel(catalog));
+                        break;
                     }
                 }
+            }
+        }
+    }
+
+    private void UpdateExaminedFileDirectory()
+    {
+        if (!Directory.Exists(_examinedFileDirectoryPath))
+        {
+            _logger.LogError("Directory \"{ExaminedFilePathDataset}\" doesn't exist.", _examinedFileDirectoryPath);
+            _notificationService.Notify(new NotificationMessage
+                { Duration = 2000, Severity = NotificationSeverity.Error, Summary = "Katalog nie istnieje!" });
+
+            return;
+        }
+
+        foreach (var file in Directory.GetFiles(_examinedFileDirectoryPath).ToList())
+        {
+            if (Path.GetExtension(file) == ".wav")
+            {
+                ExaminedFileList.Add(new PathModel(file));
             }
         }
     }
@@ -83,6 +107,7 @@ public class EmyService
         return wf.TotalTime.TotalSeconds;
     }
 
+    // Function fingerprints tracks and them to the Emy database for further examination.
     public async Task AddDataset(string path)
     {
         // Delete all existing datasets from EmySound database.
@@ -101,7 +126,7 @@ public class EmyService
                 {
                     try
                     {
-                        var track = new TrackInfo(file, Path.GetFileNameWithoutExtension(file), string.Empty);
+                        var trackInfo = new TrackInfo(file, Path.GetFileNameWithoutExtension(file), string.Empty);
                         var hashes = await FingerprintCommandBuilder
                             .Instance
                             .BuildFingerprintCommand()
@@ -110,8 +135,8 @@ public class EmyService
                             .Hash();
 
                         // Add file to the EmySound database.
-                        _modelService.Insert(track, hashes);
-                        _logger.LogInformation("Added \"{Track}\" the EmySound database.", track.Title);
+                        _modelService.Insert(trackInfo, hashes);
+                        _logger.LogInformation("Added \"{Track}\" the EmySound database.", trackInfo.Title);
                         _notificationService.Notify(new NotificationMessage
                         {
                             Duration = 1000, Severity = NotificationSeverity.Success,
@@ -130,7 +155,7 @@ public class EmyService
         }
     }
 
-    public async Task<Boolean> IsFilePathCorrect(string file)
+    public async Task<bool> IsFilePathCorrect(string file)
     {
         if (File.Exists(file))
         {
@@ -139,11 +164,11 @@ public class EmyService
                 _logger.LogInformation("File \"{FileName}\" is correct.", file);
                 _notificationService.Notify(new NotificationMessage
                     { Duration = 1000, Severity = NotificationSeverity.Success, Summary = "Plik poprawny!" });
-                
+
                 return true;
             }
 
-            _logger.LogError("File \"{FileName}\" doesn't have correct format The file needs to be in wav format.",
+            _logger.LogError("File \"{FileName}\" doesn't have correct format The file needs to be in WAV format.",
                 file);
             _notificationService.Notify(new NotificationMessage
             {
@@ -160,7 +185,7 @@ public class EmyService
         return false;
     }
 
-    // Function checks whether audio contains matching patterns.
+    // function searches for matching patterns in the file examined.
     public async Task<List<ResultEntry>> FindMatches(string file, double confidence)
     {
         _logger.LogInformation("Finding matching fingerprints in the query.");
@@ -183,7 +208,7 @@ public class EmyService
                 }
             }
         }
-        
+
         _logger.LogInformation("Found {MatchesCount} matches.", matches.Count);
 
         return matches.OrderBy(x => x.QueryMatchStartsAt).ToList();

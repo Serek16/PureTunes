@@ -1,47 +1,21 @@
-﻿@inherits EmyProject.Layouts.MainLayoutComponent
+﻿@inherits MainLayoutComponent
 
-@using Radzen
 @using Radzen.Blazor
-@using EmyProject.Pages
-<RadzenDialog />
-<RadzenNotification />
-<RadzenTooltip />
-<RadzenContextMenu />
+<RadzenNotification/>
 
 <RadzenLayout>
-  <ChildContent>
-    <RadzenHeader>
-      <ChildContent>
-        <div class="row justify-content-start align-items-center">
-          <div class="col-6 d-flex align-items-center">
-            <RadzenSidebarToggle Click="@SidebarToggle0Click">
-            </RadzenSidebarToggle>
-            <RadzenLabel Text="EmyProject">
-            </RadzenLabel>
-          </div>
-          <div class="col-6 text-right">
-          </div>
+    <RadzenHeader @ref="header">
+        <div class="d-flex align-items-center justify-content-center" style="height: 8vh; width: 100%;">
+            <div class="text-center" style="font-size: 20px">
+                My Application
+            </div>
         </div>
-      </ChildContent>
     </RadzenHeader>
-    <RadzenBody @ref="body0">
-      <ChildContent>
-        <RadzenContentContainer Name="main">
-        @Body
-        </RadzenContentContainer>
-      </ChildContent>
+    <RadzenBody @ref="body">
+        <ChildContent>
+            <RadzenContentContainer Name="main">
+                @Body
+            </RadzenContentContainer>
+        </ChildContent>
     </RadzenBody>
-    <RadzenSidebar @ref="sidebar0">
-      <ChildContent>
-        <RadzenPanelMenu style="height: 100%">
-        </RadzenPanelMenu>
-      </ChildContent>
-    </RadzenSidebar>
-    <RadzenFooter>
-      <ChildContent>
-        <RadzenLabel Text="EmyProject, Copyright Ⓒ 2022">
-        </RadzenLabel>
-      </ChildContent>
-    </RadzenFooter>
-  </ChildContent>
 </RadzenLayout>

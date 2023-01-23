@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
 namespace EmyProject.CustomService;
@@ -23,13 +24,13 @@ public class AudioService
         _logger = logger;
     }
 
-    public async void FileGenerate(List<ResultEntry> result, string file)
+    public async Task FileGenerate(List<ResultEntry> result, string file)
     {
         var directory = _outPath + "\\" + DateTime.Now.ToString("MMdd.hhmmss");
         Directory.CreateDirectory(directory);
 
         List<ConvertModel> list = new List<ConvertModel>();
-        
+
         const double timeOffset = 0;
 
         foreach (var resultEntry in result)
@@ -53,12 +54,12 @@ public class AudioService
         {
             var startTime = TimeSpan.FromSeconds(item.Start);
             var endTime = TimeSpan.FromSeconds(item.End);
-            
+
             _logger.LogInformation("Exporting audio from {Start} to {End} to file {FileName}.",
-                startTime.ToString("hh\\:mm\\:ss\\.ffff"), 
+                startTime.ToString("hh\\:mm\\:ss\\.ffff"),
                 endTime.ToString("hh\\:mm\\:ss\\.ffff"),
                 list.IndexOf(item) + ".wav");
-            
+
             await Xabe.FFmpeg.FFmpeg.Conversions.New()
                 .AddStream(mediaInfo.Streams)
                 .AddParameter(
@@ -79,7 +80,7 @@ public class AudioService
             var playlist = new ConcatenatingSampleProvider(audio);
             WaveFileWriter.CreateWaveFile16(directory + "\\result.wav", playlist);
         }
-        
+
         _logger.LogInformation("The result has been generated and saved to file result.wav.");
     }
 }
