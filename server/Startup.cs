@@ -1,30 +1,31 @@
 using System;
 using System.Net.Http;
+using EmyProject.CustomService;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Logging;
 using Radzen;
-using EmyProject.CustomService;
 
 namespace EmyProject;
 
-public partial class Startup
+public class Startup
 {
+    private IConfiguration Configuration { get; }
+
     public Startup(IConfiguration configuration)
     {
         Configuration = configuration;
     }
 
-    public IConfiguration Configuration { get; }
-
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddHttpContextAccessor();
-        services.AddScoped<HttpClient>(serviceProvider =>
+        services.AddScoped(serviceProvider =>
         {
             var uriHelper = serviceProvider.GetRequiredService<NavigationManager>();
 
@@ -56,16 +57,19 @@ public partial class Startup
         });
     }
 
-    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger,
+        IHostApplicationLifetime lifetime)
     {
+        logger.LogInformation("Application is starting up.");
+
         if (env.IsDevelopment())
         {
-            Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
+            IdentityModelEventSource.ShowPII = true;
             app.UseDeveloperExceptionPage();
         }
         else
         {
-            app.Use((ctx, next) => { return next(); });
+            app.Use((ctx, next) => next());
         }
 
         app.UseHttpsRedirection();
@@ -78,5 +82,12 @@ public partial class Startup
             endpoints.MapBlazorHub();
             endpoints.MapFallbackToPage("/_Host");
         });
+
+        lifetime.ApplicationStopping.Register(() => OnStopping(logger));
+    }
+
+    private void OnStopping(ILogger<Startup> logger)
+    {
+        logger.LogInformation("Application is stopping.");
     }
 }
