@@ -54,10 +54,20 @@ public partial class MainPageComponent
 
 
         var time0 = DateTime.Now;
-
         var result = await EmyService.FindMatches(FilePath, Confidence / 100d);
-        await AudioService.FileGenerate(result, FilePath);
 
+        if (!result.Any())
+        {
+            Logger.LogInformation("There was no matching tracks. The process stops.");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Duration = 1000, Severity = NotificationSeverity.Success,
+                Summary = "Nie znaleziono żadnych pasujących reklam w audycji!"
+            });
+            return JsonConvert.SerializeObject(string.Empty, Formatting.Indented);
+        }
+
+        await AudioService.FileGenerate(result, FilePath);
         var timeSpan = DateTime.Now.Subtract(time0);
 
         Logger.LogInformation("The process has been successfully completed in {TimeSpan} seconds.",
