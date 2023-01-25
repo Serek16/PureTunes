@@ -44,6 +44,8 @@ public partial class MainPageComponent : ComponentBase
     
     private string _examinedFileDirectoryPath;
 
+    protected bool IsTaskRunning;
+    
     protected async System.Threading.Tasks.Task Load()
     {
         _datasetPath = Configuration["Dataset"];
@@ -89,6 +91,8 @@ public partial class MainPageComponent : ComponentBase
 
     protected async System.Threading.Tasks.Task Button2Click(MouseEventArgs args)
     {
+        IsTaskRunning = true;
         ResultJson = await GetResult();
+        IsTaskRunning = false;
     }
 }

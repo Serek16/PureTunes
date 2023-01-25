@@ -42,7 +42,7 @@
             </div>
             <div class="col-md-12 justify-content-between d-flex">
                 <RadzenNumeric @bind-Value="@Confidence" Min="0" Max="100"/>
-                <RadzenButton Text="match" Click="@Button2Click"/>
+                <RadzenButton Text="match" Click="@Button2Click" disabled="@IsTaskRunning"/>
             </div>
         </div>
 
