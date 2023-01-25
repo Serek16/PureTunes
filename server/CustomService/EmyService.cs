@@ -43,6 +43,11 @@ public class EmyService
     // Function fingerprints tracks and them to the Emy database for further examination.
     public async Task AddDataset(string path)
     {
+        if (!Directory.Exists(path))
+        {
+            throw new ArgumentException($"The directory path is incorrect. Couldn't find {path}");
+        }
+        
         EmptyEmySoundDatabase();
 
         // Iterate through all files.

@@ -23,7 +23,18 @@ public partial class MainPageComponent
 
     private async Task UpdateEmy()
     {
-        await EmyService.AddDataset(DirectoryPath);
+        if (Directory.Exists(DirectoryPath))
+        {
+            await EmyService.AddDataset(DirectoryPath);
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Duration = 1000, Severity = NotificationSeverity.Error,
+                Summary = "Podana ścieżka do katalogu z reklamami jest nieprawidłowa"
+            });
+        }
     }
 
     private async Task CheckFile()
