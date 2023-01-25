@@ -8,7 +8,6 @@ using SoundFingerprinting.Query;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using SoundFingerprinting.DAO.Data;
@@ -150,7 +149,7 @@ public class EmyService
 
         _logger.LogInformation("Found {MatchesCount} matches.", matches.Count);
 
-        return matches.OrderBy(x => x.QueryMatchStartsAt).ToList();
+        return matches;
     }
 
     public async Task<IEnumerable<TrackData>> ReadAllLoadedTracks()

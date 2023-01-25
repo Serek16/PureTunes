@@ -9,6 +9,8 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualBasic.CompilerServices;
+using Xabe.FFmpeg;
 
 namespace EmyProject.CustomService;
 
@@ -24,63 +26,75 @@ public class AudioService
         _logger = logger;
     }
 
-    public async Task FileGenerate(List<ResultEntry> result, string file)
+    public async Task FileGenerate(List<ResultEntry> matchedTracks, string file)
     {
-        var directory = _outPath + "\\" + DateTime.Now.ToString("MMdd.hhmmss");
-        Directory.CreateDirectory(directory);
+        if (!matchedTracks.Any())
+        {
+            throw new ArgumentException("List with matched tracks is empty.");
+        }
 
-        List<ConvertModel> list = new List<ConvertModel>();
+        // Sort matches by the order in which they occur.
+        matchedTracks = matchedTracks.OrderBy(x => x.QueryMatchStartsAt).ToList();
+        
+        var directoryPath = _outPath + "\\" + DateTime.Now.ToString("MMdd.hhmmss");
+        Directory.CreateDirectory(directoryPath);
+
+        var intervalsToCut = new List<ConvertModel>();
 
         const double timeOffset = 0;
 
-        foreach (var resultEntry in result)
+        foreach (var resultEntry in matchedTracks)
         {
-            list.Add(new ConvertModel
+            intervalsToCut.Add(new ConvertModel
             {
-                Start = list.Any() ? list.Last().CommercialEnd : 0,
+                Start = intervalsToCut.Any() ? intervalsToCut.Last().CommercialEnd : 0,
                 End = resultEntry.QueryMatchStartsAt - timeOffset,
                 CommercialEnd = resultEntry.QueryMatchStartsAt + resultEntry.DiscreteTrackCoverageLength + timeOffset
             });
         }
 
-        list.Add(new ConvertModel
+        intervalsToCut.Add(new ConvertModel
         {
-            Start = list.Last().CommercialEnd,
-            End = result.First().QueryLength // End of the main audio file.
+            Start = intervalsToCut.Last().CommercialEnd,
+            End = matchedTracks.First().QueryLength // End of the main audio file.
         });
 
         var mediaInfo = await Xabe.FFmpeg.FFmpeg.GetMediaInfo(file);
-        foreach (var item in list)
+        var i = 0;
+        foreach (var item in intervalsToCut)
         {
-            var startTime = TimeSpan.FromSeconds(item.Start);
-            var endTime = TimeSpan.FromSeconds(item.End);
-
-            _logger.LogInformation("Exporting audio from {Start} to {End} to file {FileName}.",
-                startTime.ToString("hh\\:mm\\:ss\\.ffff"),
-                endTime.ToString("hh\\:mm\\:ss\\.ffff"),
-                list.IndexOf(item) + ".wav");
-
-            await Xabe.FFmpeg.FFmpeg.Conversions.New()
-                .AddStream(mediaInfo.Streams)
-                .AddParameter(
-                    $"-ss {startTime} -t {endTime.Subtract(startTime)}")
-                .SetOutput(directory + "\\" + list.IndexOf(item) + ".wav")
-                .Start();
+            CutAudioFiles(item, StringType.FromInteger(i), directoryPath, mediaInfo);
+            i++;
         }
 
-        if (list.Count > 0)
+        _logger.LogInformation("Creating the resulting file of the operation.");
+        var finalAudioParts = new List<AudioFileReader>();
+        foreach (var item in intervalsToCut)
         {
-            _logger.LogInformation("Creating the resulting file of the operation.");
-            List<AudioFileReader> audio = new List<AudioFileReader>();
-            foreach (var item in list)
-            {
-                audio.Add(new AudioFileReader(directory + "\\" + list.IndexOf(item) + ".wav"));
-            }
-
-            var playlist = new ConcatenatingSampleProvider(audio);
-            WaveFileWriter.CreateWaveFile16(directory + "\\result.wav", playlist);
+            finalAudioParts.Add(new AudioFileReader(directoryPath + "\\" + intervalsToCut.IndexOf(item) + ".wav"));
         }
+
+        var playlist = new ConcatenatingSampleProvider(finalAudioParts);
+        WaveFileWriter.CreateWaveFile16(directoryPath + "\\result.wav", playlist);
 
         _logger.LogInformation("The result has been generated and saved to file result.wav.");
+    }
+
+    private async void CutAudioFiles(ConvertModel item, string fileName, string directoryPath, IMediaInfo mediaInfo)
+    {
+        var startTime = TimeSpan.FromSeconds(item.Start);
+        var endTime = TimeSpan.FromSeconds(item.End);
+
+        _logger.LogInformation("Exporting audio from {Start} to {End} to file {FileName}.",
+            startTime.ToString("hh\\:mm\\:ss\\.ffff"),
+            endTime.ToString("hh\\:mm\\:ss\\.ffff"),
+            fileName + ".wav");
+
+        await Xabe.FFmpeg.FFmpeg.Conversions.New()
+            .AddStream(mediaInfo.Streams)
+            .AddParameter(
+                $"-ss {startTime} -t {endTime.Subtract(startTime)}")
+            .SetOutput(directoryPath + "\\" + fileName + ".wav")
+            .Start();
     }
 }

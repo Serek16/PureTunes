@@ -38,7 +38,7 @@ public partial class MainPageComponent
             Logger.LogError(
                 "Emy Sound database is empty. Please provide at least one track.");
             NotificationService.Notify(new NotificationMessage
-                { Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Baza Emy Sound jest pustya!" });
+                { Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Baza Emy Sound jest pusta!" });
 
             return string.Empty;
         }
