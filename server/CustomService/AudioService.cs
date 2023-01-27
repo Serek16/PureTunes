@@ -35,7 +35,7 @@ public class AudioService
 
         // Sort matches by the order in which they occur.
         matchedTracks = matchedTracks.OrderBy(x => x.QueryMatchStartsAt).ToList();
-        
+
         var directoryPath = _outPath + "\\" + DateTime.Now.ToString("MMdd.hhmmss");
         Directory.CreateDirectory(directoryPath);
 
@@ -77,6 +77,8 @@ public class AudioService
         var playlist = new ConcatenatingSampleProvider(finalAudioParts);
         WaveFileWriter.CreateWaveFile16(directoryPath + "\\result.wav", playlist);
 
+        CloseAudioFiles(finalAudioParts);
+
         _logger.LogInformation("The result has been generated and saved to file result.wav.");
     }
 
@@ -96,5 +98,13 @@ public class AudioService
                 $"-ss {startTime} -t {endTime.Subtract(startTime)}")
             .SetOutput(directoryPath + "\\" + fileName + ".wav")
             .Start();
+    }
+
+    private static void CloseAudioFiles(List<AudioFileReader> finalAudioParts)
+    {
+        foreach (var file in finalAudioParts)
+        {
+            file.Close();
+        }
     }
 }
