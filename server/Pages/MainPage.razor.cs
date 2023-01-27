@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Radzen;
 using EmyProject.CustomService;
+using EmyProject.CustomService.exceptions;
 using Microsoft.AspNetCore.Components;
 using EmyProject.CustomService.Model;
 using Microsoft.Extensions.Logging;
@@ -25,7 +26,18 @@ public partial class MainPageComponent
     {
         if (Directory.Exists(DirectoryPath))
         {
-            await EmyService.AddDataset(DirectoryPath);
+            try
+            {
+                await EmyService.AddDataset(DirectoryPath);
+            }
+            catch (DockerConnectionException e)
+            {
+                Logger.LogError("Can't update Emy. {e}", e.Message);
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Nie można połączyć się Dockerem!"
+                });
+            }
         }
         else
         {
@@ -44,12 +56,25 @@ public partial class MainPageComponent
 
     private async Task<string> GetResult()
     {
-        if (!(await EmyService.ReadAllLoadedTracks()).Any())
+        try
         {
-            Logger.LogError(
-                "Emy Sound database is empty. Please provide at least one track.");
+            if (!(await EmyService.ReadAllLoadedTracks()).Any())
+            {
+                Logger.LogError(
+                    "Emy Sound database is empty. Please provide at least one track.");
+                NotificationService.Notify(new NotificationMessage
+                    { Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Baza Emy Sound jest pusta!" });
+
+                return string.Empty;
+            }
+        }
+        catch (DockerConnectionException e)
+        {
+            Logger.LogError("Can't start the task. {e}", e.Message);
             NotificationService.Notify(new NotificationMessage
-                { Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Baza Emy Sound jest pusta!" });
+            {
+                Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Nie można połączyć się Dockerem!"
+            });
 
             return string.Empty;
         }

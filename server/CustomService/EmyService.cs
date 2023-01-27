@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using EmyProject.CustomService.exceptions;
 using Microsoft.Extensions.Logging;
 using SoundFingerprinting.DAO.Data;
 
@@ -29,29 +30,35 @@ public class EmyService
 
         _modelService = EmyModelService.NewInstance("localhost", 3399);
         _audioService = new SoundFingerprintingAudioService();
-        
-        EmptyEmySoundDatabase();
+
+        if (!IsDockerConnected())
+        {
+            _notificationService.Notify(
+                severity: NotificationSeverity.Error,
+                duration: 300000,
+                summary: "Nie można połączyć się z Dockerem!"
+            );
+        }
     }
 
-    // Function returns file length.
-    private double GetWavFileDuration(string fileName)
-    {
-        using var wf = new WaveFileReader(fileName);
-        return wf.TotalTime.TotalSeconds;
-    }
+    // Function fingerprints tracks and add them to the Emy database for further examination.
 
-    // Function fingerprints tracks and them to the Emy database for further examination.
     public async Task AddDataset(string path)
     {
+        if (!IsDockerConnected())
+        {
+            throw new DockerConnectionException("Couldn't connect to the Docker EmySound!");
+        }
+
         if (!Directory.Exists(path))
         {
             throw new ArgumentException($"The directory path is incorrect. Couldn't find {path}");
         }
-        
+
         EmptyEmySoundDatabase();
 
         // Iterate through all files.
-        foreach (string file in Directory.GetFiles(path))
+        foreach (var file in Directory.GetFiles(path))
         {
             // Check if the existing file has .wav extension and if it is at least 2 seconds long.
             if (Path.GetExtension(file) == ".wav")
@@ -97,7 +104,7 @@ public class EmyService
             _modelService.DeleteTrack(item.Id);
         }
     }
-    
+
     public async Task<bool> IsFilePathCorrect(string file)
     {
         if (File.Exists(file))
@@ -129,8 +136,14 @@ public class EmyService
     }
 
     // function searches for matching patterns in the file examined.
+
     public async Task<List<ResultEntry>> FindMatches(string file, double confidence)
     {
+        if (!IsDockerConnected())
+        {
+            throw new DockerConnectionException("Couldn't connect to the Docker EmySound!");
+        }
+
         _logger.LogInformation("Finding matching fingerprints in the query.");
         var result = await QueryCommandBuilder.Instance
             .BuildQueryCommand()
@@ -159,6 +172,31 @@ public class EmyService
 
     public async Task<IEnumerable<TrackData>> ReadAllLoadedTracks()
     {
+        if (!IsDockerConnected())
+        {
+            throw new DockerConnectionException("Couldn't connect to the Docker EmySound!");
+        }
+
         return _modelService.ReadAllTracks();
+    }
+
+    private bool IsDockerConnected()
+    {
+        try
+        {
+            _modelService.ReadAllTracks();
+            return true;
+        }
+        catch (Exception e)
+        {
+            return false;
+        }
+    }
+
+    // Function returns file length.
+    private static double GetWavFileDuration(string fileName)
+    {
+        using var wf = new WaveFileReader(fileName);
+        return wf.TotalTime.TotalSeconds;
     }
 }

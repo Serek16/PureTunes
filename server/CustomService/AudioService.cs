@@ -63,7 +63,7 @@ public class AudioService
         var i = 0;
         foreach (var item in intervalsToCut)
         {
-            CutAudioFiles(item, StringType.FromInteger(i), directoryPath, mediaInfo);
+            await CutAudioFiles(item, StringType.FromInteger(i), directoryPath, mediaInfo);
             i++;
         }
 
@@ -80,7 +80,7 @@ public class AudioService
         _logger.LogInformation("The result has been generated and saved to file result.wav.");
     }
 
-    private async void CutAudioFiles(ConvertModel item, string fileName, string directoryPath, IMediaInfo mediaInfo)
+    private async Task CutAudioFiles(ConvertModel item, string fileName, string directoryPath, IMediaInfo mediaInfo)
     {
         var startTime = TimeSpan.FromSeconds(item.Start);
         var endTime = TimeSpan.FromSeconds(item.End);
