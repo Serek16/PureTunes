@@ -184,6 +184,7 @@ public class EmyService
     {
         try
         {
+            // If the function throws an exception it means service can't connect to the EmySound docker.
             _modelService.ReadAllTracks();
             return true;
         }
