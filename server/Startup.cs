@@ -70,8 +70,7 @@ public class Startup
         {
             app.Use((ctx, next) => next());
         }
-
-        app.UseHttpsRedirection();
+        
         app.UseStaticFiles();
 
         app.UseRouting();

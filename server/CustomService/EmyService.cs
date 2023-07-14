@@ -38,11 +38,11 @@ public class EmyService
                 duration: 300000,
                 summary: "Nie można połączyć się z Dockerem!"
             );
+            _logger.LogError("Couldn't connect to the EmySound Docker");
         }
     }
 
     // Function fingerprints tracks and add them to the Emy database for further examination.
-
     public async Task AddDataset(string path)
     {
         if (!IsDockerConnected())
@@ -55,7 +55,7 @@ public class EmyService
             throw new ArgumentException($"The directory path is incorrect. Couldn't find {path}");
         }
 
-        EmptyEmySoundDatabase();
+        ClearEmySoundDatabase();
 
         // Iterate through all files.
         foreach (var file in Directory.GetFiles(path))
@@ -96,7 +96,7 @@ public class EmyService
         }
     }
 
-    private void EmptyEmySoundDatabase()
+    private void ClearEmySoundDatabase()
     {
         // Delete all existing datasets from EmySound database.
         foreach (var item in _modelService.ReadAllTracks())
@@ -136,7 +136,6 @@ public class EmyService
     }
 
     // function searches for matching patterns in the file examined.
-
     public async Task<List<ResultEntry>> FindMatches(string file, double confidence)
     {
         if (!IsDockerConnected())
