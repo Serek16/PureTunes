@@ -22,7 +22,7 @@ public class AudioService
 
     public AudioService(IConfiguration configuration, ILogger<AudioService> logger)
     {
-        _outPath = configuration["outPath"];
+        _outPath = configuration["OutPath"];
         _logger = logger;
     }
 
