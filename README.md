@@ -14,40 +14,50 @@ and eliminate them.
 
 ## Installation and Running
 
-1. **Clone the Repository**: Clone this repository to your local machine.
+1. **Clone the Repository and navigate to the Root Directory:**
+   ```bash
+   git clone https://github.com/Serek16/EmySoundProject.git
+   cd EmySoundProject
+   ```
 
-2. **Edit Configuration File**: Open the `server/appsettings.json` file and edit it with the appropriate paths:
-
+2. **Edit Configuration File**: Open the `EmySoundProject/appsettings.json` file and edit it with the appropriate paths:
    ```json
    {
-   "Dataset": "path to the folder with radio broadcast files",
-   "ExaminedFileDataset": "path to the folder with subfolders containing ads",
-   "OutPath": "path to the folder where the results are to be generated"
+    "Dataset": "path to the folder with radio broadcast files",
+    "ExaminedFileDataset": "path to the folder with subfolders containing ads",
+    "OutPath": "path to the folder where the results are to be generated"
    }
    ```
 
-3. **Build the Project**: Run the following command:
+3. **Navigate to the Project Directory:**
+   ```bash
+   cd EmySoundProject
+   ```
 
+4. **Restore NuGet Packages:** 
+   ```bash
+   dotnet restore
+   ```
+
+5. **Build the Project:**
    ```bash
    dotnet build
    ```
 
-4. **Run the SoundFingerprinting Container:**
+6. **Run the SoundFingerprinting Docker container:**
    ```bash
    docker run -d -v /persistent-dir:/app/data -p 3399:3399 -p 3340:3340 addictedcs/soundfingerprinting.emy:latest
    ```
 
-5. **Run the Program**: Navigate to server directory then run the program using the following command:
-
+7. **Run the Project:**
    ```bash
-   cd server
    dotnet run
    ```
 
-6. **Access the Web UI**: Open your web browser and navigate to http://localhost:5000 to access the user interface.
+8. **Access the Web UI:** Open your web browser and navigate to http://localhost:5000 to access the user interface.
 
 
 ## License
 
-This project is made available under the MIT license. More information can be found in the LICENSE file.
+This project is made available under the MIT license. More information can be found in the [LICENSE](LICENSE) file.
 
