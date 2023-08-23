@@ -10,6 +10,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Logging;
 using Radzen;
+using SoundFingerprinting.Audio;
+using SoundFingerprinting.Emy;
 
 namespace EmySoundProject;
 
@@ -43,8 +45,10 @@ public class Startup
         services.AddSingleton(Configuration);
 
         services.AddScoped<NotificationService>();
-        services.AddScoped<EmyService>();
-        services.AddScoped<AudioService>();
+        services.AddSingleton<IFingerprintStorage, EmyDockerModelServiceAdapter>();
+        services.AddSingleton<IAudioService, FFmpegAudioService>();
+        services.AddScoped<AFMService>();
+        services.AddScoped<AudioExtractionService>();
 
         services.AddLogging(builder =>
         {
