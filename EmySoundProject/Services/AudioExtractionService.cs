@@ -14,13 +14,13 @@ using Xabe.FFmpeg;
 
 namespace EmySoundProject.Services;
 
-public class AudioService
+public class AudioExtractionService
 {
     private readonly string _outPath;
 
-    private readonly ILogger<AudioService> _logger;
+    private readonly ILogger<AudioExtractionService> _logger;
 
-    public AudioService(IConfiguration configuration, ILogger<AudioService> logger)
+    public AudioExtractionService(IConfiguration configuration, ILogger<AudioExtractionService> logger)
     {
         _outPath = configuration["OutPath"];
         _logger = logger;

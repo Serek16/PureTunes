@@ -15,9 +15,9 @@ namespace EmySoundProject.Pages;
 
 public partial class MainPageComponent
 {
-    [Inject] protected EmyService EmyService { get; set; }
+    [Inject] protected AFMService AfmService { get; set; }
 
-    [Inject] protected AudioService AudioService { get; set; }
+    [Inject] protected AudioExtractionService AudioExtractionService { get; set; }
 
     [Inject] protected ILogger<MainPageComponent> Logger { get; set; }
 
@@ -28,7 +28,7 @@ public partial class MainPageComponent
         {
             try
             {
-                await EmyService.AddDataset(DirectoryPath);
+                await AfmService.AddDataset(DirectoryPath);
             }
             catch (DockerConnectionException e)
             {
@@ -51,14 +51,14 @@ public partial class MainPageComponent
 
     private async Task CheckFile()
     {
-        await EmyService.IsFilePathCorrect(FilePath);
+        await AfmService.IsFilePathCorrect(FilePath);
     }
 
     private async Task<string> GetResult()
     {
         try
         {
-            if (!(await EmyService.ReadAllLoadedTracks()).Any())
+            if (!(await AfmService.ReadAllLoadedTracks()).Any())
             {
                 Logger.LogError(
                     "Emy Sound database is empty. Please provide at least one track.");
@@ -79,7 +79,7 @@ public partial class MainPageComponent
             return string.Empty;
         }
 
-        if (!await EmyService.IsFilePathCorrect(FilePath))
+        if (!await AfmService.IsFilePathCorrect(FilePath))
         {
             return string.Empty;
         }
@@ -90,7 +90,7 @@ public partial class MainPageComponent
 
 
         var time0 = DateTime.Now;
-        var result = await EmyService.FindMatches(FilePath, Confidence / 100d);
+        var result = await AfmService.FindMatches(FilePath, Confidence / 100d);
 
         if (!result.Any())
         {
@@ -103,7 +103,7 @@ public partial class MainPageComponent
             return JsonConvert.SerializeObject(string.Empty, Formatting.Indented);
         }
 
-        await AudioService.FileGenerate(result, FilePath);
+        await AudioExtractionService.FileGenerate(result, FilePath);
         var timeSpan = DateTime.Now.Subtract(time0);
 
         Logger.LogInformation("The process has been successfully completed in {TimeSpan} seconds.",
