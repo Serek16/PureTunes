@@ -7,17 +7,18 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
         <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.0"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.0"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.0"/>
-        <PackageReference Include="NAudio" Version="2.1.0"/>
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.1"/>
-        <PackageReference Include="SoundFingerprinting" Version="8.24.0"/>
+        <PackageReference Include="NAudio" Version="2.2.1" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="SoundFingerprinting" Version="9.0.0-beta" />
         <PackageReference Include="SoundFingerprinting.Emy" Version="8.24.4"/>
         <PackageReference Include="System.ComponentModel.Annotations" Version="6.0.0-preview.4.21253.7"/>
-        <PackageReference Include="Microsoft.Data.SqlClient" Version="2.1.4"/>
-        <PackageReference Include="Radzen.Blazor" Version="4.2.2"/>
-        <PackageReference Include="DocumentFormat.OpenXml" Version="2.11.3"/>
+        <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.0-preview3.23201.1" />
+        <PackageReference Include="Radzen.Blazor" Version="4.22.0" />
+        <PackageReference Include="DocumentFormat.OpenXml" Version="3.0.0" />
         <PackageReference Include="Xabe.FFmpeg" Version="5.2.6"/>
     </ItemGroup>
 

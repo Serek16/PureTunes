@@ -59,6 +59,8 @@ public class Startup
             });
         });
 
+        services.AddControllers();
+
         var ffmpegExecutablePath = Configuration["FFmpegSettings:ExecutablePath"];
         Xabe.FFmpeg.FFmpeg.SetExecutablesPath(ffmpegExecutablePath);
     }

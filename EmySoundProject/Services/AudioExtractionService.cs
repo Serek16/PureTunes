@@ -20,6 +20,9 @@ public class AudioExtractionService
 
     private readonly ILogger<AudioExtractionService> _logger;
 
+    private List<WaveformRegionModel> _waveformRegionModels = new();
+    public List<WaveformRegionModel> WaveformRegionModels => _waveformRegionModels;
+
     public AudioExtractionService(IConfiguration configuration, ILogger<AudioExtractionService> logger)
     {
         _outPath = configuration["OutPath"];
@@ -51,6 +54,11 @@ public class AudioExtractionService
                 End = resultEntry.QueryMatchStartsAt - timeOffset,
                 CommercialEnd = resultEntry.QueryMatchStartsAt + resultEntry.DiscreteTrackCoverageLength + timeOffset
             });
+            _waveformRegionModels.Add(new WaveformRegionModel(
+                resultEntry.Coverage.QueryMatchStartsAt,
+                resultEntry.Coverage.QueryMatchEndsAt,
+                resultEntry.Track.Title
+            ));
         }
 
         intervalsToCut.Add(new ConvertModel
