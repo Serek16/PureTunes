@@ -1,54 +1,53 @@
 ﻿@page "/"
 @inherits MainPageComponent
-<PageTitle>MainPage </PageTitle>
-<RadzenContent Container="main">
-    <ChildContent>
+<PageTitle>MainPage</PageTitle>
 
-        <div style="margin-bottom: 20px" class="row">
-            <div class="col-md-12">
-                <RadzenLabel Text="Lista dostępnych katalogów"/>
-            </div>
+<div style="margin-bottom: 20px" class="row">
+    <div class="col-md-12">
+        <RadzenLabel Text="Lista dostępnych katalogów"/>
+    </div>
 
-            <div class="col-md-12 justify-content-between d-flex">
-                <RadzenTextBox style="width: 700px" @bind-Value="@DirectoryPath" Placeholder="Ścieżka do katalogu z reklamami"/>
-                <RadzenButton Disabled="@(DirectoryPath.Length == 0)" Text="update" Click="@Button0Click"/>
-            </div>
+    <div class="col-md-12 justify-content-between d-flex">
+        <RadzenTextBox style="width: 700px" @bind-Value="@DirectoryPath" Placeholder="Ścieżka do katalogu z reklamami"/>
+        <RadzenButton Disabled="@(DirectoryPath.Length == 0)" Text="update" Click="@Button0Click"/>
+    </div>
 
-            <div class="col-md-12">
-                <RadzenDropDown Data="@DirectoryPathCollection" style="width: 700px" TextProperty="FileName" ValueProperty="Path" TValue="string" Change="@Dropdown0Change"/>
-            </div>
-        </div>
+    <div class="col-md-12">
+        <RadzenDropDown Data="@DirectoryPathCollection" style="width: 700px" TextProperty="FileName" ValueProperty="Path" TValue="string" Change="@Dropdown0Change"/>
+    </div>
+</div>
 
-        <div style="margin-bottom: 20px" class="row">
-            <div class="col-md-12">
-                <RadzenLabel Text="Plik badany"/>
-            </div>
+<div style="margin-bottom: 20px" class="row">
+    <div class="col-md-12">
+        <RadzenLabel Text="Plik badany"/>
+    </div>
 
-            <div class="col-md-12 justify-content-between d-flex">
-                <RadzenTextBox style="width: 700px" @bind-Value="@FilePath" Placeholder="Ścieżka do pliku z audycją"/>
-                <RadzenButton Disabled="@(FilePath.Length == 0)" Text="check" Click="@Button1Click"/>
-            </div>
+    <div class="col-md-12 justify-content-between d-flex">
+        <RadzenTextBox style="width: 700px" @bind-Value="@FilePath" Placeholder="Ścieżka do pliku z audycją"/>
+        <RadzenButton Disabled="@(FilePath.Length == 0)" Text="check" Click="@Button1Click"/>
+    </div>
 
-            <div class="col-md-12">
-                <RadzenDropDown Data="@ExaminedFilePathList" style="width: 700px" TextProperty="FileName" ValueProperty="Path" TValue="string" Change="@Dropdown1Change"/>
-            </div>
-        </div>
+    <div class="col-md-12">
+        <RadzenDropDown Data="@ExaminedFilePathList" style="width: 700px" TextProperty="FileName" ValueProperty="Path" TValue="string" Change="@Dropdown1Change"/>
+    </div>
+</div>
 
-        <div style="margin-bottom: 20px" class="row">
-            <div class="col-md-12">
-                <RadzenLabel Text="Dopasowanie %"/>
-            </div>
-            <div class="col-md-12 justify-content-between d-flex">
-                <RadzenNumeric @bind-Value="@Confidence" Min="0" Max="100"/>
-                <RadzenButton Text="match" Click="@Button2Click" disabled="@IsTaskRunning"/>
-            </div>
-        </div>
+<div style="margin-bottom: 20px" class="row">
+    <div class="col-md-12">
+        <RadzenLabel Text="Dopasowanie %"/>
+    </div>
+    <div class="col-md-12 justify-content-between d-flex">
+        <RadzenNumeric @bind-Value="@Confidence" Min="0" Max="100"/>
+        <RadzenButton Text="match" Click="@Button2Click" disabled="@IsTaskRunning"/>
+    </div>
+</div>
 
-        <div class="row">
-            <div class="col-md-12">
-                <RadzenTextArea style="height: 500px; width: 100%; cursor: default;" @bind-Value="@ResultJson" ReadOnly="true"/>
-            </div>
-        </div>
+<div>
+    @WaveformDisplay
+</div>
 
-    </ChildContent>
-</RadzenContent>
+<div class="row">
+    <div class="col-md-12">
+        <RadzenTextArea style="height: 500px; width: 100%; cursor: default;" @bind-Value="@ResultJson" ReadOnly="true"/>
+    </div>
+</div>
