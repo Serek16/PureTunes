@@ -54,6 +54,9 @@ public class Startup
                 options.TimestampFormat = "HH:mm:ss ";
             });
         });
+
+        var ffmpegExecutablePath = Configuration["FFmpegSettings:ExecutablePath"];
+        Xabe.FFmpeg.FFmpeg.SetExecutablesPath(ffmpegExecutablePath);
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger,
