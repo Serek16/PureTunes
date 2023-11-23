@@ -9,7 +9,7 @@ and eliminate them.
 
 ## Requirements
 
-- .NET Core 3.1 or higher
+- .NET Core 7.0
 - Docker (for running the `soundfingerprinting.emy` container)
 
 ## Installation and Running
