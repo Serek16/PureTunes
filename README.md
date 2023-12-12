@@ -11,6 +11,7 @@ and eliminate them.
 
 - .NET Core 7.0
 - Docker (for running the `soundfingerprinting.emy` container)
+- FFmpeg binaries
 
 ## Installation and Running
 
@@ -49,12 +50,21 @@ and eliminate them.
    docker run -d -v /persistent-dir:/app/data -p 3399:3399 -p 3340:3340 addictedcs/soundfingerprinting.emy:latest
    ```
 
-7. **Run the Project:**
+7. **Install FFmpeg:**
+   - **Windows:** Download FFmpeg libraries for x64 platform. Place the executable files in the following folder:
+   C:\FFmpeg\bin\x64. The recommended version is [ffmpeg-5.1.2-full_build-shared](https://github.com/GyanD/codexffmpeg/releases/download/5.1.2/ffmpeg-5.1.2-full_build-shared.7z).
+   </br></br>
+   - **Linux:**
+      ```bash
+      sudo apt-get install ffmpeg
+      ```
+
+8. **Run the Project:**
    ```bash
    dotnet run
    ```
 
-8. **Access the Web UI:** Open your web browser and navigate to http://localhost:5000 to access the user interface.
+9. **Access the Web UI:** Open your web browser and navigate to http://localhost:5000 to access the user interface.
 
 
 ## License
