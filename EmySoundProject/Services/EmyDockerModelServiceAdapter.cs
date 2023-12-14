@@ -53,6 +53,11 @@ public class EmyDockerModelServiceAdapter : IFingerprintStorage
         return _modelService;
     }
 
+    public void DeleteTrackById(string trackId)
+    {
+        _modelService.DeleteTrack(trackId);
+    }
+
     private bool IsDockerConnected()
     {
         try

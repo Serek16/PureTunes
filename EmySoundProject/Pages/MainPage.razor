@@ -1,21 +1,9 @@
 ﻿@page "/"
+@using EmySoundProject.Components
 @inherits MainPageComponent
 <PageTitle>MainPage</PageTitle>
 
-<div style="margin-bottom: 20px" class="row">
-    <div class="col-md-12">
-        <RadzenLabel Text="Lista dostępnych katalogów"/>
-    </div>
-
-    <div class="col-md-12 justify-content-between d-flex">
-        <RadzenTextBox style="width: 700px" @bind-Value="@DirectoryPath" Placeholder="Ścieżka do katalogu z reklamami"/>
-        <RadzenButton Disabled="@(DirectoryPath.Length == 0)" Text="update" Click="@Button0Click"/>
-    </div>
-
-    <div class="col-md-12">
-        <RadzenDropDown Data="@DirectoryPathCollection" style="width: 700px" TextProperty="FileName" ValueProperty="Path" TValue="string" Change="@Dropdown0Change"/>
-    </div>
-</div>
+<DirectoryDatasetPicker />
 
 <div style="margin-bottom: 20px" class="row">
     <div class="col-md-12">

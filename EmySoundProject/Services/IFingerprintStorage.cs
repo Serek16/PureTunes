@@ -13,4 +13,6 @@ public interface IFingerprintStorage
     void DeleteAllTracks();
 
     IModelService GetModel();
+
+    void DeleteTrackById(string trackId);
 }

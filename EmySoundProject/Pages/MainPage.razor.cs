@@ -17,40 +17,7 @@ namespace EmySoundProject.Pages;
 
 public partial class MainPageComponent
 {
-    [Inject] protected AFMService AfmService { get; set; }
-
-    [Inject] protected AudioExtractionService AudioExtractionService { get; set; }
-
-    [Inject] protected ILogger<MainPageComponent> Logger { get; set; }
-
     protected RenderFragment WaveformDisplay;
-
-    private async Task UpdateEmy()
-    {
-        if (Directory.Exists(DirectoryPath))
-        {
-            try
-            {
-                await AfmService.AddDataset(DirectoryPath);
-            }
-            catch (DockerConnectionException e)
-            {
-                Logger.LogError("Can't update Emy. {e}", e.Message);
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Nie można połączyć się Dockerem!"
-                });
-            }
-        }
-        else
-        {
-            NotificationService.Notify(new NotificationMessage
-            {
-                Duration = 1000, Severity = NotificationSeverity.Error,
-                Summary = "Podana ścieżka do katalogu z reklamami jest nieprawidłowa"
-            });
-        }
-    }
 
     private async Task CheckFile()
     {
@@ -73,7 +40,7 @@ public partial class MainPageComponent
         }
         catch (DockerConnectionException e)
         {
-            Logger.LogError("Can't start the task. {e}", e.Message);
+            Logger.LogError($"Can't start the task. {e.Message}");
             NotificationService.Notify(new NotificationMessage
             {
                 Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Nie można połączyć się Dockerem!"
@@ -139,50 +106,11 @@ public partial class MainPageComponent
         StateHasChanged(); // Request UI to be re-rendered. @waveformDisplay is now visible
     }
 
-    private List<PathModel> GetDirectories()
-    {
-        if (!Directory.Exists(_datasetPath))
-        {
-            Logger.LogError("Directory \"{DatasetPath}\" doesn't exist.", _datasetPath);
-            NotificationService.Notify(new NotificationMessage
-                { Duration = 2000, Severity = NotificationSeverity.Error, Summary = "Katalog nie istnieje!" });
-
-            return new List<PathModel>();
-        }
-
-        // Check if the directory contains subdirectories with audio files.
-        if (Directory.GetDirectories(_datasetPath).Length == 0)
-        {
-            Logger.LogError("Directory \"{DatasetPath}\" doesn't contain any subdirectories.", _datasetPath);
-            NotificationService.Notify(new NotificationMessage
-                { Duration = 2000, Severity = NotificationSeverity.Error, Summary = "Brak katalogów dataset!" });
-
-            return new List<PathModel>();
-        }
-
-        var datasetDirList = new List<PathModel>();
-
-        foreach (var catalog in Directory.GetDirectories(_datasetPath).ToList())
-        {
-            foreach (var file in Directory.GetFiles(catalog).ToList())
-            {
-                if (Path.GetExtension(file) == ".wav")
-                {
-                    // Add subdirectory to DatasetDirList if a subdirectory contains at least 1 .wav file.
-                    datasetDirList.Add(new PathModel(catalog));
-                    break;
-                }
-            }
-        }
-
-        return datasetDirList;
-    }
-
     private List<PathModel> GetExaminedFiles()
     {
         if (!Directory.Exists(_examinedFileDirectoryPath))
         {
-            Logger.LogError("Directory \"{ExaminedFilePathDataset}\" doesn't exist.", _examinedFileDirectoryPath);
+            Logger.LogError($"Directory \"{_examinedFileDirectoryPath}\" doesn't exist.");
             NotificationService.Notify(new NotificationMessage
                 { Duration = 2000, Severity = NotificationSeverity.Error, Summary = "Katalog nie istnieje!" });
 

@@ -44,4 +44,9 @@ public class InMemoryModelServiceAdapter : IFingerprintStorage
     {
         return _modelService;
     }
+
+    public void DeleteTrackById(string trackId)
+    {
+        _modelService.DeleteTrack(trackId);
+    }
 }

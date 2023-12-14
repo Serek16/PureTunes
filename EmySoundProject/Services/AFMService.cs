@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+using DocumentFormat.OpenXml.Office2019.Presentation;
 using Microsoft.Extensions.Logging;
 using NAudio.Wave;
 using Radzen;
@@ -33,73 +35,85 @@ public class AFMService
     }
 
     // Function fingerprints tracks and add them to the Emy database for further examination.
-    public async Task AddDataset(string path)
+    public async Task<IEnumerable<TrackInfo>> AddDataset(string directoryPath)
     {
-        if (!Directory.Exists(path))
+        if (!Directory.Exists(directoryPath))
         {
-            throw new ArgumentException($"The directory path is incorrect. Couldn't find {path}");
+            throw new ArgumentException($"The directory path is incorrect. Couldn't find {directoryPath}");
         }
 
+        var addedTrackList = new List<TrackInfo>();
+
         // Iterate through all files.
-        foreach (var file in Directory.GetFiles(path))
+        foreach (var filePath in Directory.GetFiles(directoryPath))
         {
-            // Check if the existing file has .wav extension and if it is at least 2 seconds long.
-            if (!Path.GetExtension(file).Equals(".wav"))
-            {
-                _logger.LogWarning("{file} will not be included because it isn't a WAV file", file);
-                return;
+            var trackInfo = await FingerprintAndAddFile(filePath);
+            if (trackInfo != null) {
+                addedTrackList.Add(trackInfo);
             }
+        }
 
-            if (GetWavFileDuration(file) < 2)
-            {
-                _logger.LogWarning("{file} will not be included because it is too short (less than 2 seconds)", file);
-                return;
-            }
+        return addedTrackList;
+    }
 
-            try
-            {
-                var trackInfo = new TrackInfo(file, Path.GetFileNameWithoutExtension(file), string.Empty);
-                var hashes = await FingerprintCommandBuilder
-                    .Instance
-                    .BuildFingerprintCommand()
-                    .From(file)
-                    .UsingServices(_audioService)
-                    .Hash();
+    public async Task<TrackInfo> FingerprintAndAddFile(string filePath)
+    {
+        // Check if the existing file has .wav extension and if it is at least 2 seconds long.
+        if (!Path.GetExtension(filePath).Equals(".wav"))
+        {
+            _logger.LogWarning($"{filePath} will not be included because it isn't a WAV file");
+            return null;
+        }
 
-                // Add file to the EmySound database.
-                _fingerprintStorage.AddTrack(trackInfo, hashes);
-                _logger.LogInformation("Added \"{Track}\" the EmySound database.", trackInfo.Title);
-                _notificationService.Notify(new NotificationMessage
-                {
-                    Duration = 1000, Severity = NotificationSeverity.Success,
-                    Summary = $"Wstawiono plik {file} z {hashes.Count} odciskami."
-                });
-            }
-            catch (Exception e)
+        if (GetWavFileDuration(filePath) < 2)
+        {
+            _logger.LogWarning($"{filePath} will not be included because it is too short (less than 2 seconds)");
+            return null;
+        }
+
+        try
+        {
+            var trackInfo = new TrackInfo(filePath, Path.GetFileNameWithoutExtension(filePath), string.Empty);
+            var hashes = await FingerprintCommandBuilder
+                .Instance
+                .BuildFingerprintCommand()
+                .From(filePath)
+                .UsingServices(_audioService)
+                .Hash();
+
+            // Add file to the EmySound database.
+            _fingerprintStorage.AddTrack(trackInfo, hashes);
+            _logger.LogInformation($"Added \"{trackInfo.Title}\" the EmySound database.");
+            _notificationService.Notify(new NotificationMessage
             {
-                _logger.LogError("Couldn't add track to EmySound database. Error info:\n{ErrorMessage}",
-                    e.Message);
-                _notificationService.Notify(new NotificationMessage
-                    { Duration = 1000, Severity = NotificationSeverity.Error, Summary = e.Message });
-            }
+                Duration = 1000, Severity = NotificationSeverity.Success,
+                Summary = $"Wstawiono plik {filePath} z {hashes.Count} odciskami."
+            });
+            return trackInfo;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError($"Couldn't add track to EmySound database. Error info:\n{e.Message}");
+            _notificationService.Notify(new NotificationMessage
+                { Duration = 1000, Severity = NotificationSeverity.Error, Summary = e.Message });
+            return null;
         }
     }
 
-    public async Task<bool> IsFilePathCorrect(string file)
+    public async Task<bool> IsFilePathCorrect(string filePath)
     {
-        if (File.Exists(file))
+        if (File.Exists(filePath))
         {
-            if (Path.GetExtension(file) == ".wav")
+            if (Path.GetExtension(filePath) == ".wav")
             {
-                _logger.LogInformation("File \"{FileName}\" is correct.", file);
+                _logger.LogInformation($"File \"{filePath}\" is correct.");
                 _notificationService.Notify(new NotificationMessage
                     { Duration = 1000, Severity = NotificationSeverity.Success, Summary = "Plik poprawny!" });
 
                 return true;
             }
 
-            _logger.LogError("File \"{FileName}\" doesn't have correct format The file needs to be in WAV format.",
-                file);
+            _logger.LogError($"File \"{filePath}\" doesn't have correct format The file needs to be in WAV format.");
             _notificationService.Notify(new NotificationMessage
             {
                 Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Niepoprawne rozszerzenie pliku!"
@@ -107,7 +121,7 @@ public class AFMService
         }
         else
         {
-            _logger.LogError("File \"{FileName}\" doesn't exist", file);
+            _logger.LogError($"File \"{filePath}\" doesn't exist");
             _notificationService.Notify(new NotificationMessage
                 { Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Plik nie istnieje!" });
         }
@@ -139,7 +153,7 @@ public class AFMService
             }
         }
 
-        _logger.LogInformation("Found {MatchesCount} matches.", matches.Count);
+        _logger.LogInformation($"Found {matches.Count} matches.");
 
         return matches;
     }

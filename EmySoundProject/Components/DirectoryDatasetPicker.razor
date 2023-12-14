@@ -1,0 +1,127 @@
+@using System.IO
+@using EmySoundProject.Exceptions
+@using EmySoundProject.Models
+@using EmySoundProject.Pages
+@using EmySoundProject.Services
+@using Microsoft.Extensions.Configuration
+@using Microsoft.Extensions.Logging
+@using Radzen.Blazor
+@using SoundFingerprinting.Data
+
+@namespace EmySoundProject.Components
+
+<div style="margin-bottom: 20px" class="row">
+    <div class="col-md-12">
+        <RadzenLabel Text="Lista dostępnych katalogów"/>
+    </div>
+
+    <div class="col-md-12 justify-content-between d-flex">
+        <RadzenTextBox style="width: 700px" @bind-Value="@_directoryPath" Placeholder="Ścieżka do katalogu z reklamami"/>
+        <RadzenButton Disabled="@(_directoryPath.Length == 0)" Text="update" Click="@UpdateEmy"/>
+    </div>
+
+    <div class="col-md-12">
+        <RadzenDropDown Data="@_directoryPathCollection" style="width: 700px" TextProperty="FileName" ValueProperty="Path" TValue="string" Change="@Dropdown0Change"/>
+    </div>
+</div>
+
+@code {
+    [Inject]
+    protected AFMService AfmService { get; set; }
+
+    [Inject]
+    protected ILogger<MainPageComponent> Logger { get; set; }
+
+    [Inject]
+    protected NotificationService NotificationService { get; set; }
+
+    [Inject]
+    protected IConfiguration Configuration { get; set; }
+
+    [Parameter]
+    public Action OnTracksAdded { get; set; }
+
+    private string _directoryPath;
+    private IEnumerable<PathModel> _directoryPathCollection;
+
+    private string _datasetPath;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _datasetPath = Configuration["Dataset"];
+        _directoryPathCollection = GetDirectories();
+        _directoryPath = string.Empty;
+    }
+
+    private async Task UpdateEmy()
+    {
+        if (Directory.Exists(_directoryPath))
+        {
+            try
+            {
+                await AfmService.AddDataset(_directoryPath);
+                OnTracksAdded?.Invoke();
+            }
+            catch (DockerConnectionException e)
+            {
+                Logger.LogError($"Can't update Emy. {e.Message}");
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Nie można połączyć się Dockerem!"
+                });
+            }
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Duration = 1000, Severity = NotificationSeverity.Error,
+                Summary = "Podana ścieżka do katalogu z reklamami jest nieprawidłowa"
+            });
+        }
+    }
+
+    private async Task Dropdown0Change(dynamic args)
+    {
+        _directoryPath = args;
+    }
+
+    private List<PathModel> GetDirectories()
+    {
+        if (!Directory.Exists(_datasetPath))
+        {
+            Logger.LogError($"Directory \"{_datasetPath}\" doesn't exist.");
+            NotificationService.Notify(new NotificationMessage
+            { Duration = 2000, Severity = NotificationSeverity.Error, Summary = "Katalog nie istnieje!" });
+
+            return new List<PathModel>();
+        }
+
+        // Check if the directory contains subdirectories with audio files.
+        if (Directory.GetDirectories(_datasetPath).Length == 0)
+        {
+            Logger.LogError($"Directory \"{_datasetPath}\" doesn't contain any subdirectories.");
+            NotificationService.Notify(new NotificationMessage
+            { Duration = 2000, Severity = NotificationSeverity.Error, Summary = "Brak katalogów dataset!" });
+
+            return new List<PathModel>();
+        }
+
+        var datasetDirList = new List<PathModel>();
+
+        foreach (var catalog in Directory.GetDirectories(_datasetPath).ToList())
+        {
+            foreach (var file in Directory.GetFiles(catalog).ToList())
+            {
+                if (Path.GetExtension(file) == ".wav")
+                {
+                    // Add subdirectory to DatasetDirList if a subdirectory contains at least 1 .wav file.
+                    datasetDirList.Add(new PathModel(catalog));
+                    break;
+                }
+            }
+        }
+
+        return datasetDirList;
+    }
+}
