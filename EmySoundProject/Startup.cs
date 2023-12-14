@@ -45,8 +45,8 @@ public class Startup
         services.AddSingleton(Configuration);
 
         services.AddScoped<NotificationService>();
-        services.AddSingleton<IFingerprintStorage, EmyDockerModelServiceAdapter>();
-        services.AddSingleton<IAudioService, FFmpegAudioService>();
+        services.AddScoped<IFingerprintStorage, EmyDockerModelServiceAdapter>();
+        services.AddScoped<IAudioService, FFmpegAudioService>();
         services.AddScoped<AFMService>();
         services.AddScoped<AudioExtractionService>();
 

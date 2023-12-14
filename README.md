@@ -11,7 +11,7 @@ and eliminate them.
 
 - .NET Core 7.0
 - Docker (for running the `soundfingerprinting.emy` container)
-- FFmpeg binaries
+- FFmpeg binaries. Recommended: [ffmpeg-5.1.2-full_build-shared](https://github.com/GyanD/codexffmpeg/releases/download/5.1.2/ffmpeg-5.1.2-full_build-shared.7z) 
 
 ## Installation and Running
 

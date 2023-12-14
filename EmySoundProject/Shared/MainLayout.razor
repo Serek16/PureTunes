@@ -1,5 +1,5 @@
 ﻿@inherits LayoutComponentBase
-
+@inject NavigationManager Navigation
 @using Radzen.Blazor
 <RadzenNotification/>
 
@@ -10,8 +10,52 @@
                 My Application
             </div>
         </div>
+        <RadzenMenu style="margin-left: 10%">
+            <RadzenMenuItem Text="@_menuButtonText" Icon="@_icon" Click="@_menuButtonClickHandler" />
+        </RadzenMenu>
     </RadzenHeader>
     <RadzenBody>
         @Body
     </RadzenBody>
 </RadzenLayout>
+
+@code
+{
+    private string _menuButtonText;
+    private Action _menuButtonClickHandler;
+    private string _icon;
+
+    protected override async Task OnInitializedAsync()
+    {
+        string curPath = Navigation.Uri.Replace(Navigation.BaseUri, "");
+        if (curPath.Equals(""))
+        {
+            _menuButtonText = "Lista wgranych reklam";
+            _menuButtonClickHandler = MoveToList;
+            _icon = "list";
+        }
+        else
+        {
+            _menuButtonText = "Powrót";
+            _menuButtonClickHandler = MoveToMenu;
+            _icon = "home";
+        }
+    }
+
+    private void MoveToMenu()
+    {
+        Navigation.NavigateTo("/");
+        _menuButtonClickHandler = MoveToList;
+        _menuButtonText = "Lista wgranych reklam";
+        _icon = "list";
+    }
+
+    private void MoveToList()
+    {
+        Navigation.NavigateTo("/tracks");
+        _menuButtonText = "Powrót";
+        _menuButtonClickHandler = MoveToMenu;
+        _icon = "home";
+    }
+
+}
