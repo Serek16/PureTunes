@@ -46,9 +46,15 @@ and eliminate them.
    ```
 
 6. **Run the SoundFingerprinting Docker container:**
-   ```bash
-   docker run -d -v /persistent-dir:/app/data -p 3399:3399 -p 3340:3340 addictedcs/soundfingerprinting.emy:latest
-   ```
+   - **Windows:**
+      ```bash
+      docker run -d -v $Env:USERPROFILE/FingerprintsStorage:/app/data -p 3399:3399 -p 3340:3340 addictedcs/soundfingerprinting.emy:latest
+      ```
+   
+   - **Linux:**
+      ```bash
+      docker run -d -v ~/FingerprintsStorage:/app/data -p 3399:3399 -p 3340:3340 addictedcs/soundfingerprinting.emy:latest
+      ```
 
 7. **Install FFmpeg:**
    - **Windows:** Download FFmpeg libraries for x64 platform. Place the executable files in the following folder:
