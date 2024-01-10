@@ -39,7 +39,7 @@ public class AudioExtractionService
         // Sort matches by the order in which they occur.
         matchedTracks = matchedTracks.OrderBy(x => x.QueryMatchStartsAt).ToList();
 
-        var directoryPath = _outPath + "\\" + DateTime.Now.ToString("MMdd.hhmmss");
+        var directoryPath = _outPath + "\\" + DateTime.Now.ToString("yyyy-MM-dd HH.mm.ss");
         Directory.CreateDirectory(directoryPath);
 
         var intervalsToCut = new List<ConvertModel>();
