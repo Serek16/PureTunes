@@ -39,13 +39,13 @@ public partial class MainPageComponent : ComponentBase
     protected List<PathModel> ExaminedFilePathList { get; set; }
 
     protected double Confidence { get; set; }
-
-    protected string ResultJson { get; set; }
     
     private string _examinedFileDirectoryPath;
 
     protected bool IsTaskRunning;
-    
+
+    protected bool IsExctracting;
+
     protected override async Task OnInitializedAsync()
     {
         _examinedFileDirectoryPath = Configuration["ExaminedFileDataset"];
@@ -55,8 +55,6 @@ public partial class MainPageComponent : ComponentBase
         ExaminedFilePathList = GetExaminedFiles();
 
         Confidence = 80; // Suggested optimal confidence value.
-
-        ResultJson = string.Empty;
     }
 
     protected async Task Dropdown1Change(dynamic args)
@@ -71,8 +69,11 @@ public partial class MainPageComponent : ComponentBase
 
     protected async Task Button2Click(MouseEventArgs args)
     {
-        IsTaskRunning = true;
-        ResultJson = await GetResult();
-        IsTaskRunning = false;
+        await FindMatches();
+    }
+
+    protected async Task GenerateButtonClick(MouseEventArgs arg)
+    {
+        await ExtractAudioClips(ResultList);
     }
 }

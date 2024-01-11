@@ -1,9 +1,10 @@
 ﻿@page "/"
 @using EmySoundProject.Components
 @inherits MainPageComponent
+
 <PageTitle>MainPage</PageTitle>
 
-<DirectoryDatasetPicker />
+<DirectoryDatasetPicker/>
 
 <div style="margin-bottom: 20px" class="row">
     <div class="col-md-12">
@@ -34,8 +35,49 @@
     @WaveformDisplay
 </div>
 
-<div class="row">
-    <div class="col-md-12">
-        <RadzenTextArea style="height: 500px; width: 100%; cursor: default;" @bind-Value="@ResultJson" ReadOnly="true"/>
+@if (ResultList.Any())
+{
+    <RadzenAccordion style="margin-top: 20px; margin-bottom: 20px">
+        <Items>
+            <RadzenAccordionItem Text="More info">
+                <RadzenAccordion>
+                    <Items>
+                        @foreach (var entry in ResultList)
+                        {
+                            var accordionItemTitle = $"{entry.Track.Title} {entry.MatchedAt.ToString("HH:mm:ss")}";
+                            <RadzenAccordionItem Text="@accordionItemTitle">
+                                <b>Title:</b> @entry.Track.Title <br/>
+                                <b>Length:</b> @entry.Track.Length <br/>
+                                <b>File path:</b> @entry.Track.Id <br/>
+                                <b>Coverage:</b>
+                                <ul>
+                                    <li><b>Confidence</b>: @entry.Coverage.Confidence</li>
+                                    <li><b>QueryMatchStartsAt</b>: @entry.Coverage.QueryMatchEndsAt</li>
+                                    <li><b>TrackMatchStartsAt</b>: @entry.Coverage.TrackMatchStartsAt</li>
+                                    <li><b>TrackMatchEndsAt</b>: @entry.Coverage.TrackMatchEndsAt</li>
+                                    <li><b>QueryMatchEndsAt</b>: @entry.Coverage.QueryMatchEndsAt</li>
+                                    <li><b>TrackCoverageWithPermittedGapsLength</b>: @entry.Coverage.TrackCoverageWithPermittedGapsLength</li>
+                                    <li><b>QueryCoverageWithPermittedGapsLength</b>: @entry.Coverage.QueryCoverageWithPermittedGapsLength</li>
+                                    <li><b>TrackDiscreteCoverageLength</b>: @entry.Coverage.TrackDiscreteCoverageLength</li>
+                                    <li><b>QueryDiscreteCoverageLength</b>: @entry.Coverage.QueryDiscreteCoverageLength</li>
+                                    <li><b>TrackGapsCoverageLength</b>: @entry.Coverage.TrackGapsCoverageLength</li>
+                                    <li><b>QueryGapsCoverageLength</b>: @entry.Coverage.QueryGapsCoverageLength</li>
+                                    <li><b>TrackStartsAt</b>: @entry.Coverage.TrackStartsAt</li>
+                                    <li><b>QueryLength</b>: @entry.Coverage.QueryLength</li>
+                                    <li><b>TrackLength</b>: @entry.Coverage.TrackLength</li>
+                                </ul>
+                            </RadzenAccordionItem>
+                        }
+                    </Items>
+                </RadzenAccordion>
+            </RadzenAccordionItem>
+        </Items>
+    </RadzenAccordion>
+}
+
+@if (ResultList.Any())
+{
+    <div style="display: flex; justify-content: center;">
+        <RadzenButton Text="generate" Click="@GenerateButtonClick" disabled="@(IsTaskRunning || IsExctracting)"/>
     </div>
-</div>
+}
