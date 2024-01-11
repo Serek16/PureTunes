@@ -9,7 +9,6 @@ using EmySoundProject.Exceptions;
 using EmySoundProject.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Radzen;
 using SoundFingerprinting.Query;
 
@@ -19,13 +18,16 @@ public partial class MainPageComponent
 {
     protected RenderFragment WaveformDisplay;
 
+    protected List<ResultEntry> ResultList = new();
+
     private async Task CheckFile()
     {
         await AfmService.IsFilePathCorrect(FilePath);
     }
 
-    private async Task<string> GetResult()
+    private async Task FindMatches()
     {
+        IsTaskRunning = true;
         try
         {
             if (!(await AfmService.ReadAllLoadedTracks()).Any())
@@ -35,7 +37,7 @@ public partial class MainPageComponent
                 NotificationService.Notify(new NotificationMessage
                     { Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Baza Emy Sound jest pusta!" });
 
-                return string.Empty;
+                return;
             }
         }
         catch (DockerConnectionException e)
@@ -46,12 +48,12 @@ public partial class MainPageComponent
                 Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Nie można połączyć się Dockerem!"
             });
 
-            return string.Empty;
+            return;
         }
 
         if (!await AfmService.IsFilePathCorrect(FilePath))
         {
-            return string.Empty;
+            return;
         }
 
         Logger.LogInformation("Started processing files.");
@@ -60,24 +62,26 @@ public partial class MainPageComponent
 
 
         var time0 = DateTime.Now;
-
-        List<ResultEntry> matches = await AfmService.FindMatches(FilePath, Confidence / 100d);
-        var waveformTask = CreateResultWaveform(FilePath);
-        await ExtractAudioClips(matches);
-
+        ResultList = await AfmService.FindMatches(FilePath, Confidence / 100d);
+        await RenderResultWaveform(FilePath);
         var timeSpan = DateTime.Now.Subtract(time0);
-        Logger.LogInformation("The process has been successfully completed in {TimeSpan} seconds.",
+
+        Logger.LogInformation("The matching process has been successfully completed in {TimeSpan} seconds.",
             timeSpan.ToString("ss'.'ff"));
         NotificationService.Notify(new NotificationMessage
             { Duration = 1000, Severity = NotificationSeverity.Success, Summary = "Wygenerowano rezultat!" });
 
-        await waveformTask;
-
-        return JsonConvert.SerializeObject(matches, Formatting.Indented);
+        IsTaskRunning = false;
     }
 
     private async Task ExtractAudioClips(List<ResultEntry> matches)
     {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Duration = 1000, Severity = NotificationSeverity.Success,
+            Summary = "Rozpoczęto generowanie plików!"
+        });
+
         if (!matches.Any())
         {
             Logger.LogInformation("There was no matching tracks. The process stops.");
@@ -89,10 +93,18 @@ public partial class MainPageComponent
             return;
         }
 
+        IsExctracting = true;
         await AudioExtractionService.FileGenerate(matches, FilePath);
+        IsExctracting = false;
+
+        NotificationService.Notify(new NotificationMessage
+        {
+            Duration = 1000, Severity = NotificationSeverity.Success,
+            Summary = "Pomyślnie wygenerowano plik!"
+        });
     }
 
-    private async Task CreateResultWaveform(string filePath)
+    private async Task RenderResultWaveform(string filePath)
     {
         var peaks = AudioPeaksReader.ReadAudioPeaks(filePath, 0.01);
         WaveformDisplay = builder =>
