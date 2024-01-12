@@ -66,6 +66,32 @@ public class AudioExtractionService
         });
     }
 
+    public async Task AssignRegionsToCut(List<WaveformRegionModel> waveformRegionList)
+    {
+        waveformRegionList.Sort((reg1, reg2) => reg1.Start.CompareTo(reg2.Start));
+        var endOfFile = _intervalsToCut.Last().End;
+        _intervalsToCut = new List<ConvertModel>();
+        foreach (var region in waveformRegionList)
+        {
+            if (_intervalsToCut.Any() && region.Start <= _intervalsToCut.Last().CommercialEnd)
+            {
+                _intervalsToCut.Last().CommercialEnd = region.End;
+                continue;
+            }
+            _intervalsToCut.Add(new ConvertModel
+            {
+                Start = _intervalsToCut.Any() ? _intervalsToCut.Last().CommercialEnd : 0,
+                End = region.Start,
+                CommercialEnd = region.End
+            });
+        }
+        _intervalsToCut.Add(new ConvertModel
+        {
+            Start = _intervalsToCut.Last().CommercialEnd,
+            End = endOfFile
+        });
+    }
+
     public async Task FileGenerate(string fileToCutPath)
     {
         if (!_intervalsToCut.Any())

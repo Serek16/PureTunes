@@ -1,5 +1,7 @@
 ﻿@using System.Net
+@using System.Text.Json
 @using EmySoundProject.Models
+@using Newtonsoft.Json
 @inject IJSRuntime JS
 
 <div id="waveform"></div>
@@ -8,12 +10,13 @@
     <label style="margin-left: 2em">
         Zoom: <input id="slider" type="range" />
     </label>
+    <label style="margin-left: 20px" title="Change regions size">
+        <input type="checkbox" @onchange="(e) => _onCheckboxChanged()"  /> Edit
+    </label>
 </p>
 
 @code
 {
-    private bool _loop;
-
     [Parameter]
     public string AudioFilePath { get; set; }
 
@@ -23,11 +26,7 @@
     [Parameter]
     public double[] AudioPeaks { get; set; }
 
-    // Use JavaScript interop to update the loop variable in JS
-    private async Task UpdateLoopStatus()
-    {
-        await JS.InvokeVoidAsync("setLoopStatus", _loop);
-    }
+    private bool _isChecked;
 
     // Call the JavaScript initialization function when the component is loaded
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -52,5 +51,17 @@
             waveformRegionModel.Start,
             waveformRegionModel.End,
             waveformRegionModel.RegionName);
+    }
+
+    public async Task<List<WaveformRegionModel>> GetWaveformRegionList()
+    {
+        var jsonArray = await JS.InvokeAsync<JsonElement>("getRegionRanges");
+        return JsonConvert.DeserializeObject<List<WaveformRegionModel>>(jsonArray.GetRawText());
+    }
+
+    private void _onCheckboxChanged()
+    {
+        _isChecked = !_isChecked;
+        JS.InvokeVoidAsync("setRegionResizeMode", _isChecked);
     }
 }
