@@ -20,11 +20,6 @@ public partial class MainPageComponent
 
     protected List<ResultEntry> ResultList = new();
 
-    private async Task CheckFile()
-    {
-        await AfmService.IsFilePathCorrect(FilePath);
-    }
-
     private async Task FindMatches()
     {
         IsTaskRunning = true;
@@ -51,7 +46,7 @@ public partial class MainPageComponent
             return;
         }
 
-        if (!await AfmService.IsFilePathCorrect(FilePath))
+        if (!await IsFilePathCorrect(FilePath))
         {
             return;
         }
@@ -94,7 +89,8 @@ public partial class MainPageComponent
         }
 
         IsExctracting = true;
-        await AudioExtractionService.FileGenerate(matches, FilePath);
+        // TODO: take final regions that user accepts
+        await AudioExtractionService.FileGenerate(FilePath);
         IsExctracting = false;
 
         NotificationService.Notify(new NotificationMessage
@@ -104,13 +100,14 @@ public partial class MainPageComponent
         });
     }
 
-    private async Task RenderResultWaveform(string filePath)
+    private async Task RenderResultWaveform(string fileToCutPath)
     {
-        var peaks = AudioPeaksReader.ReadAudioPeaks(filePath, 0.01);
+        await AudioExtractionService.AssignRegionsToCut(ResultList);
+        var peaks = AudioPeaksReader.ReadAudioPeaks(fileToCutPath, 0.01);
         WaveformDisplay = builder =>
         {
             builder.OpenComponent<WaveformDisplay>(0);
-            builder.AddAttribute(0, "AudioFilePath", filePath);
+            builder.AddAttribute(0, "AudioFilePath", fileToCutPath);
             builder.AddAttribute(0, "WaveformRegionModels", AudioExtractionService.WaveformRegionModels);
             builder.AddAttribute(0, "AudioPeaks", peaks);
             builder.CloseComponent();
@@ -140,5 +137,34 @@ public partial class MainPageComponent
         }
 
         return examinedFileList;
+    }
+
+    private async Task<bool> IsFilePathCorrect(string filePath)
+    {
+        if (File.Exists(filePath))
+        {
+            if (Path.GetExtension(filePath) == ".wav")
+            {
+                Logger.LogInformation($"File \"{filePath}\" is correct.");
+                NotificationService.Notify(new NotificationMessage
+                    { Duration = 1000, Severity = NotificationSeverity.Success, Summary = "Plik poprawny!" });
+
+                return true;
+            }
+
+            Logger.LogError($"File \"{filePath}\" doesn't have correct format The file needs to be in WAV format.");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Niepoprawne rozszerzenie pliku!"
+            });
+        }
+        else
+        {
+            Logger.LogError($"File \"{filePath}\" doesn't exist");
+            NotificationService.Notify(new NotificationMessage
+                { Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Plik nie istnieje!" });
+        }
+
+        return false;
     }
 }
