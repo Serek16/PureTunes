@@ -99,8 +99,10 @@ async function initializeWaveform(audioFileUrl, audioPeaks) {
 }
 
 // Called from WaveformDisplay.razor
-function setLoopStatus(status) {
-    loop = status
+function setRegionResizeMode(isResizable) {
+    wsRegions.regions.forEach(reg => {
+        reg.setOptions({resize: isResizable})
+    })
 }
 
 function addRegion(start, end, name) {
@@ -128,6 +130,20 @@ function addRegionToList(start, end, name) {
         'name': name
     }
     regionsToAdd.push(regionInfo)
+}
+
+// Called from WaveformDisplay.razor
+function getRegionRanges() {
+    let returnList = []
+    wsRegions.regions.forEach(reg => {
+        let regData = {
+            "start": reg.start,
+            "end": reg.end,
+            "regionName": reg.content.innerText
+        }
+        returnList.push(regData)
+    })
+    return returnList;
 }
 
 async function zoomToRegion(region) {

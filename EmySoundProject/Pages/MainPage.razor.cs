@@ -16,7 +16,9 @@ namespace EmySoundProject.Pages;
 
 public partial class MainPageComponent
 {
-    protected RenderFragment WaveformDisplay;
+    protected RenderFragment WaveformDisplayRender;
+
+    private WaveformDisplay _waveformDisplay;
 
     protected List<ResultEntry> ResultList = new();
 
@@ -89,7 +91,8 @@ public partial class MainPageComponent
         }
 
         IsExctracting = true;
-        // TODO: take final regions that user accepts
+        var waveformRegionList = await _waveformDisplay.GetWaveformRegionList();
+        AudioExtractionService.AssignRegionsToCut(waveformRegionList);
         await AudioExtractionService.FileGenerate(FilePath);
         IsExctracting = false;
 
@@ -104,12 +107,13 @@ public partial class MainPageComponent
     {
         await AudioExtractionService.AssignRegionsToCut(ResultList);
         var peaks = AudioPeaksReader.ReadAudioPeaks(fileToCutPath, 0.01);
-        WaveformDisplay = builder =>
+        WaveformDisplayRender = builder =>
         {
             builder.OpenComponent<WaveformDisplay>(0);
             builder.AddAttribute(0, "AudioFilePath", fileToCutPath);
             builder.AddAttribute(0, "WaveformRegionModels", AudioExtractionService.WaveformRegionModels);
             builder.AddAttribute(0, "AudioPeaks", peaks);
+            builder.AddComponentReferenceCapture(1, inst => _waveformDisplay = (WaveformDisplay)inst);
             builder.CloseComponent();
         };
         StateHasChanged(); // Request UI to be re-rendered. @waveformDisplay is now visible
