@@ -64,7 +64,7 @@ public partial class MainPageComponent : ComponentBase
     
     protected async Task Button1Click(MouseEventArgs args)
     {
-        await CheckFile();
+        await IsFilePathCorrect(FilePath);
     }
 
     protected async Task Button2Click(MouseEventArgs args)

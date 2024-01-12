@@ -100,35 +100,6 @@ public class AFMService
         }
     }
 
-    public async Task<bool> IsFilePathCorrect(string filePath)
-    {
-        if (File.Exists(filePath))
-        {
-            if (Path.GetExtension(filePath) == ".wav")
-            {
-                _logger.LogInformation($"File \"{filePath}\" is correct.");
-                _notificationService.Notify(new NotificationMessage
-                    { Duration = 1000, Severity = NotificationSeverity.Success, Summary = "Plik poprawny!" });
-
-                return true;
-            }
-
-            _logger.LogError($"File \"{filePath}\" doesn't have correct format The file needs to be in WAV format.");
-            _notificationService.Notify(new NotificationMessage
-            {
-                Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Niepoprawne rozszerzenie pliku!"
-            });
-        }
-        else
-        {
-            _logger.LogError($"File \"{filePath}\" doesn't exist");
-            _notificationService.Notify(new NotificationMessage
-                { Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Plik nie istnieje!" });
-        }
-
-        return false;
-    }
-
     // function searches for matching patterns in the file examined.
     public async Task<List<ResultEntry>> FindMatches(string file, double confidence)
     {

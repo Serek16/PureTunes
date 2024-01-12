@@ -20,8 +20,9 @@ public class AudioExtractionService
 
     private readonly ILogger<AudioExtractionService> _logger;
 
-    private List<WaveformRegionModel> _waveformRegionModels = new();
-    public List<WaveformRegionModel> WaveformRegionModels => _waveformRegionModels;
+    private List<ConvertModel> _intervalsToCut;
+
+    public List<WaveformRegionModel> WaveformRegionModels;
 
     public AudioExtractionService(IConfiguration configuration, ILogger<AudioExtractionService> logger)
     {
@@ -29,47 +30,55 @@ public class AudioExtractionService
         _logger = logger;
     }
 
-    public async Task FileGenerate(List<ResultEntry> matchedTracks, string file)
+    public async Task AssignRegionsToCut(List<ResultEntry> matchedTracks)
     {
         if (!matchedTracks.Any())
         {
-            throw new ArgumentException("List with matched tracks is empty.");
+            throw new ArgumentException("List of matched tracks is empty.");
         }
 
         // Sort matches by the order in which they occur.
         matchedTracks = matchedTracks.OrderBy(x => x.QueryMatchStartsAt).ToList();
 
-        var directoryPath = _outPath + "\\" + DateTime.Now.ToString("yyyy-MM-dd HH.mm.ss");
-        Directory.CreateDirectory(directoryPath);
-
-        var intervalsToCut = new List<ConvertModel>();
-
         const double timeOffset = 0;
 
+        WaveformRegionModels = new List<WaveformRegionModel>();
+        _intervalsToCut = new List<ConvertModel>();
         foreach (var resultEntry in matchedTracks)
         {
-            intervalsToCut.Add(new ConvertModel
+            _intervalsToCut.Add(new ConvertModel
             {
-                Start = intervalsToCut.Any() ? intervalsToCut.Last().CommercialEnd : 0,
+                Start = _intervalsToCut.Any() ? _intervalsToCut.Last().CommercialEnd : 0,
                 End = resultEntry.QueryMatchStartsAt - timeOffset,
                 CommercialEnd = resultEntry.QueryMatchStartsAt + resultEntry.DiscreteTrackCoverageLength + timeOffset
             });
-            _waveformRegionModels.Add(new WaveformRegionModel(
+            WaveformRegionModels.Add(new WaveformRegionModel(
                 resultEntry.Coverage.QueryMatchStartsAt,
                 resultEntry.Coverage.QueryMatchEndsAt,
                 resultEntry.Track.Title
             ));
         }
 
-        intervalsToCut.Add(new ConvertModel
+        _intervalsToCut.Add(new ConvertModel
         {
-            Start = intervalsToCut.Last().CommercialEnd,
+            Start = _intervalsToCut.Last().CommercialEnd,
             End = matchedTracks.First().QueryLength // End of the main audio file.
         });
+    }
 
-        var mediaInfo = await Xabe.FFmpeg.FFmpeg.GetMediaInfo(file);
+    public async Task FileGenerate(string fileToCutPath)
+    {
+        if (!_intervalsToCut.Any())
+        {
+            throw new ArgumentException("List of intervals to cut is empty.");
+        }
+
+        var directoryPath = _outPath + "\\" + DateTime.Now.ToString("yyyy-MM-dd HH.mm.ss");
+        Directory.CreateDirectory(directoryPath);
+
+        var mediaInfo = await Xabe.FFmpeg.FFmpeg.GetMediaInfo(fileToCutPath);
         var i = 0;
-        foreach (var item in intervalsToCut)
+        foreach (var item in _intervalsToCut)
         {
             await CutAudioFiles(item, StringType.FromInteger(i), directoryPath, mediaInfo);
             i++;
@@ -77,9 +86,9 @@ public class AudioExtractionService
 
         _logger.LogInformation("Creating the resulting file of the operation.");
         var finalAudioParts = new List<AudioFileReader>();
-        foreach (var item in intervalsToCut)
+        foreach (var item in _intervalsToCut)
         {
-            finalAudioParts.Add(new AudioFileReader(directoryPath + "\\" + intervalsToCut.IndexOf(item) + ".wav"));
+            finalAudioParts.Add(new AudioFileReader(directoryPath + "\\" + _intervalsToCut.IndexOf(item) + ".wav"));
         }
 
         var playlist = new ConcatenatingSampleProvider(finalAudioParts);
@@ -90,7 +99,7 @@ public class AudioExtractionService
         _logger.LogInformation("The result has been generated and saved to file result.wav.");
     }
 
-    private async Task CutAudioFiles(ConvertModel item, string fileName, string directoryPath, IMediaInfo mediaInfo)
+    private async Task CutAudioFiles(ConvertModel item, string outputFileName, string outputDirPath, IMediaInfo mediaInfo)
     {
         var startTime = TimeSpan.FromSeconds(item.Start);
         var endTime = TimeSpan.FromSeconds(item.End);
@@ -98,13 +107,13 @@ public class AudioExtractionService
         _logger.LogInformation("Exporting audio from {Start} to {End} to file {FileName}.",
             startTime.ToString("hh\\:mm\\:ss\\.ffff"),
             endTime.ToString("hh\\:mm\\:ss\\.ffff"),
-            fileName + ".wav");
+            outputFileName + ".wav");
 
         await Xabe.FFmpeg.FFmpeg.Conversions.New()
             .AddStream(mediaInfo.Streams)
             .AddParameter(
                 $"-ss {startTime} -t {endTime.Subtract(startTime)}")
-            .SetOutput(directoryPath + "\\" + fileName + ".wav")
+            .SetOutput(outputDirPath + "\\" + outputFileName + ".wav")
             .Start();
     }
 
