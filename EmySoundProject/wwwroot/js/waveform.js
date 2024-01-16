@@ -1,6 +1,5 @@
 ﻿let ws
 let wsRegions
-let loop = true
 let regionsToAdd = []
 
 // Called from WaveformDisplay.razor
@@ -82,7 +81,9 @@ async function initializeWaveform(audioFileUrl, audioPeaks) {
     wsRegions.on('region-double-clicked', (region, e) => {
         e.preventDefault()
         e.stopPropagation()
-        zoomToRegion(region)
+        if (region.content.id !== "_filler") {
+            zoomToRegion(region)
+        }
     })
 
     // Setting max and min zoom level.
@@ -101,11 +102,14 @@ async function initializeWaveform(audioFileUrl, audioPeaks) {
 // Called from WaveformDisplay.razor
 function setRegionResizeMode(isResizable) {
     wsRegions.regions.forEach(reg => {
-        reg.setOptions({resize: isResizable})
+        // Skip filler regions
+        if (reg.content.id !== "_filler") {
+            reg.setOptions({resize: isResizable})
+        }
     })
 }
 
-function addRegion(start, end, name) {
+function addAdRegion(start, end, name) {
     wsRegions.addRegion({
         start: start,
         end: end,
@@ -116,9 +120,30 @@ function addRegion(start, end, name) {
     })
 }
 
+function addFillerRegion(start, end) {
+    const div = document.createElement("div")
+    div.style.width = "100%"
+    div.style.height = "100%"
+    div.title = "filler"
+    div.id = "_filler"
+
+    wsRegions.addRegion({
+        start: start,
+        end: end,
+        color: "rgba(255,255,204,0.5)",
+        drag: false,
+        resize: false,
+        content: div
+    })
+}
+
 function placeRegions() {
     regionsToAdd.forEach(regionInfo => {
-        addRegion(regionInfo.start, regionInfo.end, regionInfo.name)
+        if (regionInfo.name !== "_filler") {
+            addAdRegion(regionInfo.start, regionInfo.end, regionInfo.name)
+        } else {
+            addFillerRegion(regionInfo.start, regionInfo.end)
+        }
     })
 }
 
@@ -139,11 +164,33 @@ function getRegionRanges() {
         let regData = {
             "start": reg.start,
             "end": reg.end,
-            "regionName": reg.content.innerText
+        }
+        if (reg.content !== undefined) {
+            regData["regionName"] = reg.content.innerText
+        } else {
+            regData["regionName"] = "_filler"
         }
         returnList.push(regData)
     })
     return returnList;
+}
+
+// Called from WaveformDisplay.razor
+function removeAllFillerRegions() {
+    wsRegions.regions.forEach(region => {
+        if (region.content.id === "_filler") {
+            region.remove()
+        }
+    })
+}
+
+// Called from WaveformDisplay.razor
+function revertAllFillerRegions() {
+    regionsToAdd.forEach(regionInfo => {
+        if (regionInfo.name === "_filler") {
+            addFillerRegion(regionInfo.start, regionInfo.end)
+        }
+    })
 }
 
 async function zoomToRegion(region) {

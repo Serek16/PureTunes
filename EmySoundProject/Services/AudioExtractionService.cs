@@ -16,13 +16,15 @@ namespace EmySoundProject.Services;
 
 public class AudioExtractionService
 {
+    private const double GapBetweenAds = 1;
+
+    private const double TimeOffset = 0;
+
     private readonly string _outPath;
 
     private readonly ILogger<AudioExtractionService> _logger;
 
     private List<ConvertModel> _intervalsToCut;
-
-    public List<WaveformRegionModel> WaveformRegionModels;
 
     public AudioExtractionService(IConfiguration configuration, ILogger<AudioExtractionService> logger)
     {
@@ -30,7 +32,7 @@ public class AudioExtractionService
         _logger = logger;
     }
 
-    public async Task AssignRegionsToCut(List<ResultEntry> matchedTracks)
+    public async Task<List<WaveformRegionModel>> AssignRegions(List<ResultEntry> matchedTracks)
     {
         if (!matchedTracks.Any())
         {
@@ -40,44 +42,44 @@ public class AudioExtractionService
         // Sort matches by the order in which they occur.
         matchedTracks = matchedTracks.OrderBy(x => x.QueryMatchStartsAt).ToList();
 
-        const double timeOffset = 0;
-
-        WaveformRegionModels = new List<WaveformRegionModel>();
-        _intervalsToCut = new List<ConvertModel>();
+        var waveformRegionModels = new List<WaveformRegionModel>();
         foreach (var resultEntry in matchedTracks)
         {
-            _intervalsToCut.Add(new ConvertModel
+            // Add that yellow filler region if needed, when a gap between ads is small enough.
+            if (waveformRegionModels.Any() &&
+                resultEntry.QueryMatchStartsAt - waveformRegionModels.Last().End <= GapBetweenAds)
             {
-                Start = _intervalsToCut.Any() ? _intervalsToCut.Last().CommercialEnd : 0,
-                End = resultEntry.QueryMatchStartsAt - timeOffset,
-                CommercialEnd = resultEntry.QueryMatchStartsAt + resultEntry.DiscreteTrackCoverageLength + timeOffset
-            });
-            WaveformRegionModels.Add(new WaveformRegionModel(
-                resultEntry.Coverage.QueryMatchStartsAt,
-                resultEntry.Coverage.QueryMatchEndsAt,
+                waveformRegionModels.Add(new WaveformRegionModel(
+                    waveformRegionModels.Last().End,
+                    resultEntry.Coverage.QueryMatchStartsAt - TimeOffset,
+                    "_filler"
+                ));
+            }
+
+            waveformRegionModels.Add(new WaveformRegionModel(
+                resultEntry.Coverage.QueryMatchStartsAt - TimeOffset,
+                resultEntry.Coverage.QueryMatchEndsAt + TimeOffset,
                 resultEntry.Track.Title
             ));
         }
 
-        _intervalsToCut.Add(new ConvertModel
-        {
-            Start = _intervalsToCut.Last().CommercialEnd,
-            End = matchedTracks.First().QueryLength // End of the main audio file.
-        });
+        return waveformRegionModels;
     }
 
-    public async Task AssignRegionsToCut(List<WaveformRegionModel> waveformRegionList)
+    public async Task AssignRegionsToCut(List<WaveformRegionModel> waveformRegionList, double queryLength)
     {
-        waveformRegionList.Sort((reg1, reg2) => reg1.Start.CompareTo(reg2.Start));
-        var endOfFile = _intervalsToCut.Last().End;
+        waveformRegionList = waveformRegionList.OrderBy(r => r.Start).ToList();
         _intervalsToCut = new List<ConvertModel>();
         foreach (var region in waveformRegionList)
         {
-            if (_intervalsToCut.Any() && region.Start <= _intervalsToCut.Last().CommercialEnd)
+            if (_intervalsToCut.Any()
+                && region.Start <= _intervalsToCut.Last().CommercialEnd
+                && region.End > _intervalsToCut.Last().CommercialEnd)
             {
                 _intervalsToCut.Last().CommercialEnd = region.End;
                 continue;
             }
+
             _intervalsToCut.Add(new ConvertModel
             {
                 Start = _intervalsToCut.Any() ? _intervalsToCut.Last().CommercialEnd : 0,
@@ -85,11 +87,15 @@ public class AudioExtractionService
                 CommercialEnd = region.End
             });
         }
+
         _intervalsToCut.Add(new ConvertModel
         {
             Start = _intervalsToCut.Last().CommercialEnd,
-            End = endOfFile
+            End = queryLength
         });
+
+        // In case when the first region starts at 0 or the last one ends at the end of the query, the code simply
+        // doesn't work (probably other cases too).
     }
 
     public async Task FileGenerate(string fileToCutPath)
@@ -125,7 +131,8 @@ public class AudioExtractionService
         _logger.LogInformation("The result has been generated and saved to file result.wav.");
     }
 
-    private async Task CutAudioFiles(ConvertModel item, string outputFileName, string outputDirPath, IMediaInfo mediaInfo)
+    private async Task CutAudioFiles(ConvertModel item, string outputFileName, string outputDirPath,
+        IMediaInfo mediaInfo)
     {
         var startTime = TimeSpan.FromSeconds(item.Start);
         var endTime = TimeSpan.FromSeconds(item.End);
