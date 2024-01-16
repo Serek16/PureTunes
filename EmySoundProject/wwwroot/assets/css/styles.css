@@ -1,3 +1,6 @@
 /* Import the Radzen CSS files */
 @import './styles-generated.css';
 
+#waveform ::part(region-content) {
+    margin-top: 0 !important;
+}

@@ -39,12 +39,14 @@
 {
     <RadzenAccordion style="margin-top: 20px; margin-bottom: 20px">
         <Items>
-            <RadzenAccordionItem Text="More info">
+            <RadzenAccordionItem Text="Detail info">
                 <RadzenAccordion>
                     <Items>
-                        @foreach (var entry in ResultList)
+                        @foreach (var entry in ResultList.OrderBy(r => r.QueryMatchStartsAt))
                         {
-                            var accordionItemTitle = $"{entry.Track.Title} {entry.MatchedAt.ToString("HH:mm:ss")}";
+                            var time = TimeSpan.FromSeconds(entry.QueryMatchStartsAt);
+                            var formattedTime = time.ToString(@"hh\:mm\:ss");
+                            var accordionItemTitle = $"{entry.Track.Title} {formattedTime}";
                             <RadzenAccordionItem Text="@accordionItemTitle">
                                 <b>Title:</b> @entry.Track.Title <br/>
                                 <b>Length:</b> @entry.Track.Length <br/>

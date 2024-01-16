@@ -13,6 +13,9 @@
     <label style="margin-left: 20px" title="Change regions size">
         <input type="checkbox" @onchange="(e) => _onCheckboxChanged()"  /> Edit
     </label>
+    <label style="margin-left: 20px" title="Add/remove filler regions">
+        <input type="checkbox" @onchange="(e) => _addOrRemoveFillerRegions() " checked/> Show filler regions
+    </label>
 </p>
 
 @code
@@ -27,6 +30,8 @@
     public double[] AudioPeaks { get; set; }
 
     private bool _isChecked;
+
+    private bool _showFillerRegions = true;
 
     // Call the JavaScript initialization function when the component is loaded
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -63,5 +68,18 @@
     {
         _isChecked = !_isChecked;
         JS.InvokeVoidAsync("setRegionResizeMode", _isChecked);
+    }
+
+    private void _addOrRemoveFillerRegions()
+    {
+        _showFillerRegions = !_showFillerRegions;
+        if (_showFillerRegions)
+        {
+            JS.InvokeVoidAsync("revertAllFillerRegions");
+        }
+        else
+        {
+            JS.InvokeVoidAsync("removeAllFillerRegions");
+        }
     }
 }

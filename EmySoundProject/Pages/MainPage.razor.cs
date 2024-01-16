@@ -92,7 +92,7 @@ public partial class MainPageComponent
 
         IsExctracting = true;
         var waveformRegionList = await _waveformDisplay.GetWaveformRegionList();
-        AudioExtractionService.AssignRegionsToCut(waveformRegionList);
+        await AudioExtractionService.AssignRegionsToCut(waveformRegionList, ResultList.First().QueryLength);
         await AudioExtractionService.FileGenerate(FilePath);
         IsExctracting = false;
 
@@ -105,13 +105,13 @@ public partial class MainPageComponent
 
     private async Task RenderResultWaveform(string fileToCutPath)
     {
-        await AudioExtractionService.AssignRegionsToCut(ResultList);
+        var waveformRegionModels = await AudioExtractionService.AssignRegions(ResultList);
         var peaks = AudioPeaksReader.ReadAudioPeaks(fileToCutPath, 0.01);
         WaveformDisplayRender = builder =>
         {
             builder.OpenComponent<WaveformDisplay>(0);
             builder.AddAttribute(0, "AudioFilePath", fileToCutPath);
-            builder.AddAttribute(0, "WaveformRegionModels", AudioExtractionService.WaveformRegionModels);
+            builder.AddAttribute(0, "WaveformRegionModels", waveformRegionModels);
             builder.AddAttribute(0, "AudioPeaks", peaks);
             builder.AddComponentReferenceCapture(1, inst => _waveformDisplay = (WaveformDisplay)inst);
             builder.CloseComponent();
