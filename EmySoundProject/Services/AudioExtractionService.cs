@@ -18,7 +18,9 @@ public class AudioExtractionService
 {
     private const double GapBetweenAds = 1;
 
-    private const double TimeOffset = 0;
+    private const double TimeOffsetFront = 0;
+
+    private const double TimeOffsetEnd = 0.4;
 
     private readonly string _outPath;
 
@@ -51,14 +53,14 @@ public class AudioExtractionService
             {
                 waveformRegionModels.Add(new WaveformRegionModel(
                     waveformRegionModels.Last().End,
-                    resultEntry.Coverage.QueryMatchStartsAt - TimeOffset,
+                    resultEntry.Coverage.QueryMatchStartsAt - TimeOffsetFront,
                     "_filler"
                 ));
             }
 
             waveformRegionModels.Add(new WaveformRegionModel(
-                resultEntry.Coverage.QueryMatchStartsAt - TimeOffset,
-                resultEntry.Coverage.QueryMatchEndsAt + TimeOffset,
+                resultEntry.Coverage.QueryMatchStartsAt - TimeOffsetFront,
+                resultEntry.Coverage.QueryMatchEndsAt + TimeOffsetEnd,
                 resultEntry.Track.Title
             ));
         }

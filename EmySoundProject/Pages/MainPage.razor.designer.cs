@@ -42,7 +42,7 @@ public partial class MainPageComponent : ComponentBase
     
     private string _examinedFileDirectoryPath;
 
-    protected bool IsTaskRunning;
+    protected bool IsFingerprintingAndMatching;
 
     protected bool IsExctracting;
 

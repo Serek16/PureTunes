@@ -24,7 +24,7 @@ public partial class MainPageComponent
 
     private async Task FindMatches()
     {
-        IsTaskRunning = true;
+        IsFingerprintingAndMatching = true;
         try
         {
             if (!(await AfmService.ReadAllLoadedTracks()).Any())
@@ -68,7 +68,7 @@ public partial class MainPageComponent
         NotificationService.Notify(new NotificationMessage
             { Duration = 1000, Severity = NotificationSeverity.Success, Summary = "Wygenerowano rezultat!" });
 
-        IsTaskRunning = false;
+        IsFingerprintingAndMatching = false;
     }
 
     private async Task ExtractAudioClips(List<ResultEntry> matches)
