@@ -27,7 +27,7 @@
     </div>
     <div class="col-md-12 justify-content-between d-flex">
         <RadzenNumeric @bind-Value="@Confidence" Min="0" Max="100"/>
-        <RadzenButton Text="match" Click="@Button2Click" disabled="@IsTaskRunning"/>
+        <RadzenButton Text="match" Click="@Button2Click" disabled="@IsFingerprintingAndMatching"/>
     </div>
 </div>
 
@@ -80,6 +80,15 @@
 @if (ResultList.Any())
 {
     <div style="display: flex; justify-content: center;">
-        <RadzenButton Text="generate" Click="@GenerateButtonClick" disabled="@(IsTaskRunning || IsExctracting)"/>
+        <RadzenButton Text="generate" Click="@GenerateButtonClick" disabled="@(IsFingerprintingAndMatching || IsExctracting)"/>
+    </div>
+}
+
+@if (IsFingerprintingAndMatching || IsExctracting)
+{
+    <div class="fullscreen-div">
+        <div class="centered-content">
+             <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        </div>
     </div>
 }
