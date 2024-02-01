@@ -1,0 +1,55 @@
+@page "/tracks"
+@using SoundFingerprinting.Data
+@using PureTunes.Components
+@inherits TrackListPageComponent
+
+<PageTitle>Tracks</PageTitle>
+
+<DirectoryDatasetPicker OnTracksAdded="HandleTracksAdded" />
+<RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete_forever" class="mt-2 mb-4" Text="Usuń wszystko"
+              Click="@RemoveAll_onClick"/>
+
+<RadzenDataGrid @ref="@DataGrid" AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false"
+                FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="100" AllowPaging="true"
+                PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                Data="@TrackList" TItem="TrackInfo" ColumnWidth="300px" LogicalFilterOperator="LogicalFilterOperator.Or">
+    <Columns>
+        <RadzenDataGridColumn TItem="TrackInfo" Title="#" Width="25px" Filterable="false" Sortable="false" TextAlign="TextAlign.Center">
+            <Template>
+                <RenderOnceComponent CanRender=@(!(Index >= DataGrid.PageSize))>
+                    @{
+                        ResetIndex(Index >= DataGrid.PageSize);
+                    }
+                    @((DataGrid.CurrentPage * DataGrid.PageSize) + Index++ + 1)
+                </RenderOnceComponent>
+            </Template>
+
+
+            <Template>
+                <RenderOnceComponent CanRender=@(!(Index >= DataGrid.PageSize))>
+                    @((DataGrid.CurrentPage * DataGrid.PageSize) + Index++ + 1)
+                </RenderOnceComponent>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="TrackInfo" Property="Title" Title="Nazwa" Width="160px"/>
+        <RadzenDataGridColumn TItem="TrackInfo" Title="Data wstawienia" FormatString="{0:d}" Width="100px">
+            <Template Context="trackInfo">
+                @FormatDate(trackInfo.MetaFields["InsertDate"])
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="TrackInfo" Title="Długość (mm:ss)" Width="60px">
+            <Template Context="trackInfo">
+                @trackInfo.MetaFields["audio_TrackLength"]
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="TrackInfo" Property="Id" Title="Ścieżka do pliku" Width="200px"/>
+        <RadzenDataGridColumn TItem="TrackInfo" Context="trackInfo" Width="20px" Filterable="false" Sortable="false" TextAlign="TextAlign.Right">
+            <Template Context="trackInfo">
+                <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter"
+                              Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => RemoveSpecificTrack_onClick(args, trackInfo))"
+                              @onclick:stopPropagation="true">
+                </RadzenButton>
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
