@@ -1,0 +1,85 @@
+﻿@using System.Net
+@using System.Text.Json
+@using PureTunes.Models
+@using Newtonsoft.Json
+@inject IJSRuntime JS
+
+<div id="waveform"></div>
+<div id="audioControls"></div>
+<p>
+    <label style="margin-left: 2em">
+        Zoom: <input id="slider" type="range" />
+    </label>
+    <label style="margin-left: 20px" title="Change regions size">
+        <input type="checkbox" @onchange="(e) => _onCheckboxChanged()"  /> Edit
+    </label>
+    <label style="margin-left: 20px" title="Add/remove filler regions">
+        <input type="checkbox" @onchange="(e) => _addOrRemoveFillerRegions() " checked/> Show filler regions
+    </label>
+</p>
+
+@code
+{
+    [Parameter]
+    public string AudioFilePath { get; set; }
+
+    [Parameter]
+    public IEnumerable<WaveformRegionModel> WaveformRegionModels { get; set; }
+
+    [Parameter]
+    public double[] AudioPeaks { get; set; }
+
+    private bool _isChecked;
+
+    private bool _showFillerRegions = true;
+
+    // Call the JavaScript initialization function when the component is loaded
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var encodedPath = WebUtility.UrlEncode(AudioFilePath);
+            var audioUrl = $"/audio/{encodedPath}";
+            await JS.InvokeVoidAsync("initializeWaveform", audioUrl, AudioPeaks);
+
+            foreach (var waveformRegionModel in WaveformRegionModels)
+            {
+                AddRegion(waveformRegionModel);
+            }
+        }
+    }
+
+    private void AddRegion(WaveformRegionModel waveformRegionModel)
+    {
+        JS.InvokeVoidAsync(
+            "addRegionToList",
+            waveformRegionModel.Start,
+            waveformRegionModel.End,
+            waveformRegionModel.RegionName);
+    }
+
+    public async Task<List<WaveformRegionModel>> GetWaveformRegionList()
+    {
+        var jsonArray = await JS.InvokeAsync<JsonElement>("getRegionRanges");
+        return JsonConvert.DeserializeObject<List<WaveformRegionModel>>(jsonArray.GetRawText());
+    }
+
+    private void _onCheckboxChanged()
+    {
+        _isChecked = !_isChecked;
+        JS.InvokeVoidAsync("setRegionResizeMode", _isChecked);
+    }
+
+    private void _addOrRemoveFillerRegions()
+    {
+        _showFillerRegions = !_showFillerRegions;
+        if (_showFillerRegions)
+        {
+            JS.InvokeVoidAsync("revertAllFillerRegions");
+        }
+        else
+        {
+            JS.InvokeVoidAsync("removeAllFillerRegions");
+        }
+    }
+}

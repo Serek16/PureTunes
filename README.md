@@ -1,6 +1,6 @@
-﻿# AdScrubRadio: Radio Ad Removal Tool
+﻿# PureTunes: Radio Ad Removal Tool
 
-AdScrubRadio is a C# .NET application designed to remove specific advertisements from
+PureTunes is a C# .NET application designed to remove specific advertisements from
 radio broadcasts using audio fingerprinting. The program removes ads from a provided 
 audio file of a radio broadcast. Utilizing the technique of audio fingerprinting 
 through the powerful [soundfingerprinting](https://github.com/AddictedCS/soundfingerprinting)
@@ -17,8 +17,8 @@ and eliminate them.
 
 1. **Clone the Repository and navigate to the Root Directory:**
    ```bash
-   git clone https://github.com/Serek16/EmySoundProject.git
-   cd EmySoundProject
+   git clone https://github.com/Serek16/PureTunes.git
+   cd PureTunes
    ```
 
 2. **Edit Configuration File**: Open the `EmySoundProject/appsettings.json` file and edit it with the appropriate paths:
@@ -32,7 +32,7 @@ and eliminate them.
 
 3. **Navigate to the Project Directory:**
    ```bash
-   cd EmySoundProject
+   cd PureTunes
    ```
 
 4. **Restore NuGet Packages:** 
