@@ -20,8 +20,10 @@ async function initializeWaveform(audioFileUrl, audioPeaks) {
     // Create an instance of WaveSurfer
     ws = WaveSurfer.create({
         container: '#waveform',
-        waveColor: 'rgb(200, 0, 200)',
-        progressColor: 'rgb(200, 0, 200)',
+        waveColor: '#FF69B4',
+        progressColor: '#FF69B4',
+        cursorColor: '#ffffff',
+        cursorWidth: 2,
         media: audio,
         barHeight: 1,
         peaks: audioPeaks,
@@ -60,7 +62,7 @@ async function initializeWaveform(audioFileUrl, audioPeaks) {
         audioElement.appendChild(audio)
 
         ws.registerPlugin(HoverPlugin.create({
-            lineColor: '#ff0000',
+            lineColor: '#ffffff',
             lineWidth: 2,
             labelBackground: '#555',
             labelColor: '#fff',
@@ -81,7 +83,7 @@ async function initializeWaveform(audioFileUrl, audioPeaks) {
     wsRegions.on('region-double-clicked', (region, e) => {
         e.preventDefault()
         e.stopPropagation()
-        if (region.content.id !== "_filler") {
+        if (region.content.id !== "_gap") {
             zoomToRegion(region)
         }
     })
@@ -103,7 +105,7 @@ async function initializeWaveform(audioFileUrl, audioPeaks) {
 function setRegionResizeMode(isResizable) {
     wsRegions.regions.forEach(reg => {
         // Skip filler regions
-        if (reg.content.id !== "_filler") {
+        if (reg.content.id !== "_gap") {
             reg.setOptions({resize: isResizable})
         }
     })
@@ -114,7 +116,7 @@ function addAdRegion(start, end, name) {
         start: start,
         end: end,
         content: name,
-        color: "rgba(10,10,10,0.5)",
+        color: "rgba(0, 0, 100, 0.5)",
         drag: false,
         resize: false,
     })
@@ -124,13 +126,13 @@ function addFillerRegion(start, end) {
     const div = document.createElement("div")
     div.style.width = "100%"
     div.style.height = "100%"
-    div.title = "filler"
-    div.id = "_filler"
+    div.title = "gap"
+    div.id = "_gap"
 
     wsRegions.addRegion({
         start: start,
         end: end,
-        color: "rgba(255,255,204,0.5)",
+        color: "rgba(255,0,0,0.75)",
         drag: false,
         resize: false,
         content: div
@@ -139,7 +141,7 @@ function addFillerRegion(start, end) {
 
 function placeRegions() {
     regionsToAdd.forEach(regionInfo => {
-        if (regionInfo.name !== "_filler") {
+        if (regionInfo.name !== "_gap") {
             addAdRegion(regionInfo.start, regionInfo.end, regionInfo.name)
         } else {
             addFillerRegion(regionInfo.start, regionInfo.end)
@@ -168,7 +170,7 @@ function getRegionRanges() {
         if (reg.content !== undefined) {
             regData["regionName"] = reg.content.innerText
         } else {
-            regData["regionName"] = "_filler"
+            regData["regionName"] = "_gap"
         }
         returnList.push(regData)
     })
@@ -178,7 +180,7 @@ function getRegionRanges() {
 // Called from WaveformDisplay.razor
 function removeAllFillerRegions() {
     wsRegions.regions.forEach(region => {
-        if (region.content.id === "_filler") {
+        if (region.content.id === "_gap") {
             region.remove()
         }
     })
@@ -187,7 +189,7 @@ function removeAllFillerRegions() {
 // Called from WaveformDisplay.razor
 function revertAllFillerRegions() {
     regionsToAdd.forEach(regionInfo => {
-        if (regionInfo.name === "_filler") {
+        if (regionInfo.name === "_gap") {
             addFillerRegion(regionInfo.start, regionInfo.end)
         }
     })

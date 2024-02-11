@@ -106,7 +106,7 @@ public partial class MainPageComponent
     private async Task RenderResultWaveform(string fileToCutPath)
     {
         var waveformRegionModels = await AudioExtractionService.AssignRegions(ResultList);
-        var peaks = AudioPeaksReader.ReadAudioPeaks(fileToCutPath, 0.01);
+        var peaks = AudioPeaksReader.GetAudioPeaks(fileToCutPath, 100);
         WaveformDisplayRender = builder =>
         {
             builder.OpenComponent<WaveformDisplay>(0);
