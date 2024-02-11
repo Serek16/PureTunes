@@ -2,7 +2,7 @@
 @using PureTunes.Components
 @inherits MainPageComponent
 
-<PageTitle>MainPage</PageTitle>
+<PageTitle>PureTunes</PageTitle>
 
 <DirectoryDatasetPicker/>
 
@@ -13,7 +13,6 @@
 
     <div class="col-md-12 justify-content-between d-flex">
         <RadzenTextBox style="width: 700px" @bind-Value="@FilePath" Placeholder="Ścieżka do pliku z audycją"/>
-        <RadzenButton Disabled="@(FilePath.Length == 0)" Text="check" Click="@Button1Click"/>
     </div>
 
     <div class="col-md-12">
@@ -27,7 +26,7 @@
     </div>
     <div class="col-md-12 justify-content-between d-flex">
         <RadzenNumeric @bind-Value="@Confidence" Min="0" Max="100"/>
-        <RadzenButton Text="match" Click="@Button2Click" disabled="@IsFingerprintingAndMatching"/>
+        <RadzenButton Text="Wyszukaj" Click="@Button2Click" disabled="@IsFingerprintingAndMatching"/>
     </div>
 </div>
 
@@ -39,7 +38,7 @@
 {
     <RadzenAccordion style="margin-top: 20px; margin-bottom: 20px">
         <Items>
-            <RadzenAccordionItem Text="Detail info">
+            <RadzenAccordionItem Text="Informacje szczegółowe">
                 <RadzenAccordion>
                     <Items>
                         @foreach (var entry in ResultList.OrderBy(r => r.QueryMatchStartsAt))
@@ -80,7 +79,7 @@
 @if (ResultList.Any())
 {
     <div style="display: flex; justify-content: center;">
-        <RadzenButton Text="generate" Click="@GenerateButtonClick" disabled="@(IsFingerprintingAndMatching || IsExctracting)"/>
+        <RadzenButton Text="Generuj" Click="@GenerateButtonClick" disabled="@(IsFingerprintingAndMatching || IsExctracting)"/>
     </div>
 }
 

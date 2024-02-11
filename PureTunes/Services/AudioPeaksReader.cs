@@ -6,14 +6,14 @@ using System.Collections.Generic;
 
 public static class AudioPeaksReader
 {
-    public static double[] ReadAudioPeaks(string filePath, double secondsPerPeak)
+    public static double[] GetAudioPeaks(string filePath, double peaksPerSecond)
     {
         using var audioFileReader = new AudioFileReader(filePath);
 
         var sampleRate = audioFileReader.WaveFormat.SampleRate;
         var channelCount = audioFileReader.WaveFormat.Channels;
         // Calculate the sample window size based on the number of seconds per peak
-        var sampleWindow = (int)(sampleRate * secondsPerPeak);
+        var sampleWindow = (int)(sampleRate * 1 / peaksPerSecond);
 
         var peaks = new List<double>();
         var buffer = new float[sampleRate * channelCount];

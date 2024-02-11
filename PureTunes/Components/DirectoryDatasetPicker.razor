@@ -11,12 +11,12 @@
 
 <div style="margin-bottom: 20px" class="row">
     <div class="col-md-12">
-        <RadzenLabel Text="Lista dostępnych katalogów"/>
+        <RadzenLabel Text="Katalog reklam do dodania"/>
     </div>
 
     <div class="col-md-12 justify-content-between d-flex">
         <RadzenTextBox style="width: 700px" @bind-Value="@_directoryPath" Placeholder="Ścieżka do katalogu z reklamami"/>
-        <RadzenButton Disabled="@(_directoryPath.Length == 0)" Text="update" Click="@UpdateEmy"/>
+        <RadzenButton Disabled="@(_directoryPath.Length == 0)" Text="Dodaj" Click="@UpdateEmy"/>
     </div>
 
     <div class="col-md-12">

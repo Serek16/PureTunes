@@ -16,7 +16,7 @@ namespace PureTunes.Services;
 
 public class AudioExtractionService
 {
-    private const double GapBetweenAds = 1;
+    private const double GapSize = 1;
 
     private const double TimeOffsetFront = 0;
 
@@ -36,25 +36,19 @@ public class AudioExtractionService
 
     public async Task<List<WaveformRegionModel>> AssignRegions(List<ResultEntry> matchedTracks)
     {
-        if (!matchedTracks.Any())
-        {
-            throw new ArgumentException("List of matched tracks is empty.");
-        }
-
         // Sort matches by the order in which they occur.
         matchedTracks = matchedTracks.OrderBy(x => x.QueryMatchStartsAt).ToList();
 
         var waveformRegionModels = new List<WaveformRegionModel>();
         foreach (var resultEntry in matchedTracks)
         {
-            // Add that yellow filler region if needed, when a gap between ads is small enough.
             if (waveformRegionModels.Any() &&
-                resultEntry.QueryMatchStartsAt - waveformRegionModels.Last().End <= GapBetweenAds)
+                resultEntry.QueryMatchStartsAt - waveformRegionModels.Last().End <= GapSize)
             {
                 waveformRegionModels.Add(new WaveformRegionModel(
                     waveformRegionModels.Last().End,
                     resultEntry.Coverage.QueryMatchStartsAt - TimeOffsetFront,
-                    "_filler"
+                    "_gap"
                 ));
             }
 
