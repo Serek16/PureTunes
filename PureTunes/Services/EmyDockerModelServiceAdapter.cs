@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
+using PureTunes.Exceptions;
 using SoundFingerprinting;
 using SoundFingerprinting.Data;
 using SoundFingerprinting.Emy;
@@ -12,39 +14,63 @@ public class EmyDockerModelServiceAdapter : IFingerprintStorage
     private readonly EmyModelService _modelService;
     private readonly ILogger<EmyDockerModelServiceAdapter> _logger;
 
+
     public EmyDockerModelServiceAdapter(ILogger<EmyDockerModelServiceAdapter> logger, string host = "localhost", int port = 3399)
     {
+
         _modelService = EmyModelService.NewInstance(host, port);
         _logger = logger;
         if (!IsDockerConnected())
         {
-            _logger.LogError("Couldn't establish connection. Make sure that Emy Docker container is running");
+            _logger.LogError("Couldn't establish connection with Emy storage. Make sure that Emy Docker container is running");
         }
     }
 
     public void AddTrack(TrackInfo track, AVHashes hashes)
     {
-        _modelService.Insert(track, hashes);
+        try
+        {
+            _modelService.Insert(track, hashes);
+        }
+        catch (SocketException e)
+        {
+            throw new DockerConnectionException();
+        }
     }
 
     public IEnumerable<TrackInfo> GetAllTracks()
     {
-        return _modelService.ReadAllTracks().Select(track =>
-            new TrackInfo(
-                track.Id,
-                track.Title,
-                track.Artist,
-                track.MetaFields,
-                track.MediaType
-            ));
+        try
+        {
+            return _modelService.ReadAllTracks().Select(track =>
+                new TrackInfo(
+                    track.Id,
+                    track.Title,
+                    track.Artist,
+                    track.MetaFields,
+                    track.MediaType
+                ));
+        }
+        catch (SocketException e)
+        {
+            throw new DockerConnectionException();
+        }
     }
 
     public void DeleteAllTracks()
     {
-        var readAllTracks = _modelService.ReadAllTracks();
-        foreach (var track in readAllTracks)
+        try
         {
-            _modelService.DeleteTrack(track.Id);
+            var readAllTracks = _modelService.ReadAllTracks();
+            foreach (var track in readAllTracks)
+            {
+                _modelService.DeleteTrack(track.Id);
+                _logger.LogInformation("deleted " + track.Id);
+            }
+        }
+        catch (SocketException e)
+        {
+            throw new DockerConnectionException();
         }
     }
 
@@ -55,7 +81,19 @@ public class EmyDockerModelServiceAdapter : IFingerprintStorage
 
     public void DeleteTrackById(string trackId)
     {
-        _modelService.DeleteTrack(trackId);
+        try
+        {
+            _modelService.DeleteTrack(trackId);
+        }
+        catch (SocketException e)
+        {
+            throw new DockerConnectionException();
+        }
+    }
+
+    public int Count()
+    {
+        return _modelService.GetTrackIds().Count();
     }
 
     private bool IsDockerConnected()
@@ -66,7 +104,7 @@ public class EmyDockerModelServiceAdapter : IFingerprintStorage
             _modelService.ReadAllTracks();
             return true;
         }
-        catch (System.Net.Sockets.SocketException e)
+        catch (SocketException e)
         {
             return false;
         }

@@ -56,12 +56,12 @@ public class AFMService
 
     public async Task<TrackInfo> FingerprintAndAddFile(string filePath)
     {
-        // Check if the existing file has .wav extension and if it is at least 2 seconds long.
-        if (!Path.GetExtension(filePath).Equals(".wav"))
-        {
-            _logger.LogWarning($"{filePath} will not be included because it isn't a WAV file");
-            return null;
-        }
+        // // Check if the existing file has .wav extension and if it is at least 2 seconds long.
+        // if (!Path.GetExtension(filePath).Equals(".wav"))
+        // {
+        //     _logger.LogWarning($"{filePath} will not be included because it isn't a WAV file");
+        //     return null;
+        // }
 
         if (GetWavFileDuration(filePath) < 2)
         {
@@ -132,10 +132,16 @@ public class AFMService
         return _fingerprintStorage.GetAllTracks();
     }
 
-    // Function returns file length.
-    private static double GetWavFileDuration(string fileName)
+    public async Task<bool> AnyTracks()
     {
-        using var wf = new WaveFileReader(fileName);
-        return wf.TotalTime.TotalSeconds;
+        return _fingerprintStorage.Count() != 0;
+    }
+
+    // Function returns file length.
+    private static double GetWavFileDuration(string filePath)
+    {
+        using var audioFile = new AudioFileReader(filePath);
+        var duration = audioFile.TotalTime;
+        return duration.TotalSeconds;
     }
 }

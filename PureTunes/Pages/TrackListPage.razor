@@ -5,29 +5,30 @@
 
 <PageTitle>Tracks</PageTitle>
 
-<DirectoryDatasetPicker OnTracksAdded="HandleTracksAdded" />
-<RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete_forever" class="mt-2 mb-4" Text="Usuń wszystko"
-              Click="@RemoveAll_onClick"/>
+<DirectoryDatasetPicker OnTracksAdded="HandleTracksAdded"/>
 
-<RadzenDataGrid @ref="@DataGrid" AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false"
+
+<RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete_forever" class="mt-2 mb-4" Text="Usuń Wszystko"
+              IsBusy="@RemoveAll_isBusy" Click="@RemoveAll_onClick"/>
+
+
+<RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete_forever" class="mt-2 mb-4" Text="Usuń wyświetlane elementy"
+              IsBusy="@RemoveAllFromPage_isBusy" Click="@RemoveAllFromPage_onClick"/>
+
+
+<RadzenDataGrid @ref="@TrackInfoDataGrid" AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false"
                 FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="100" AllowPaging="true"
                 PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
-                Data="@TrackList" TItem="TrackInfo" ColumnWidth="300px" LogicalFilterOperator="LogicalFilterOperator.Or">
+                Data="@TrackList" TItem="TrackInfo" ColumnWidth="300px" LogicalFilterOperator="LogicalFilterOperator.Or"
+                TItem="TrackInfo" Sort="@(args => ResetIndex(true))" Page="@(args => ResetIndex(true))" Filter="@(args => ResetIndex(true))">
     <Columns>
         <RadzenDataGridColumn TItem="TrackInfo" Title="#" Width="25px" Filterable="false" Sortable="false" TextAlign="TextAlign.Center">
             <Template>
-                <RenderOnceComponent CanRender=@(!(Index >= DataGrid.PageSize))>
+                <RenderOnceComponent CanRender=@(!(Index >= TrackInfoDataGrid.PageSize))>
                     @{
-                        ResetIndex(Index >= DataGrid.PageSize);
+                        ResetIndex(Index >= TrackInfoDataGrid.PageSize);
                     }
-                    @((DataGrid.CurrentPage * DataGrid.PageSize) + Index++ + 1)
-                </RenderOnceComponent>
-            </Template>
-
-
-            <Template>
-                <RenderOnceComponent CanRender=@(!(Index >= DataGrid.PageSize))>
-                    @((DataGrid.CurrentPage * DataGrid.PageSize) + Index++ + 1)
+                    @((TrackInfoDataGrid.CurrentPage * TrackInfoDataGrid.PageSize) + Index++ + 1)
                 </RenderOnceComponent>
             </Template>
         </RadzenDataGridColumn>
@@ -42,7 +43,7 @@
                 @trackInfo.MetaFields["audio_TrackLength"]
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="TrackInfo" Property="Id" Title="Ścieżka do pliku" Width="200px"/>
+        <RadzenDataGridColumn TItem="TrackInfo" Property="Id" Title="Dodano z pliku" Width="200px"/>
         <RadzenDataGridColumn TItem="TrackInfo" Context="trackInfo" Width="20px" Filterable="false" Sortable="false" TextAlign="TextAlign.Right">
             <Template Context="trackInfo">
                 <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter"
@@ -53,3 +54,11 @@
         </RadzenDataGridColumn>
     </Columns>
 </RadzenDataGrid>
+@if (RemoveAll_isBusy || RemoveAllFromPage_isBusy)
+{
+    <div class="fullscreen-div">
+        <div class="centered-content">
+            <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate"/>
+        </div>
+    </div>
+}

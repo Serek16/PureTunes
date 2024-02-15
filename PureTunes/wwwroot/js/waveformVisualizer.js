@@ -132,7 +132,7 @@ function addFillerRegion(start, end) {
     wsRegions.addRegion({
         start: start,
         end: end,
-        color: "rgba(255,0,0,0.75)",
+        color: "rgba(255,0,0,0.25)",
         drag: false,
         resize: false,
         content: div
@@ -141,8 +141,7 @@ function addFillerRegion(start, end) {
 
 function placeRegions() {
     regionsToAdd.forEach(regionInfo => {
-        if (regionInfo.name !== "_gap") {
-            addAdRegion(regionInfo.start, regionInfo.end, regionInfo.name)
+        if (regionInfo.regionName !== "_gap") {addAdRegion(regionInfo.start, regionInfo.end, regionInfo.regionName)
         } else {
             addFillerRegion(regionInfo.start, regionInfo.end)
         }
@@ -150,13 +149,8 @@ function placeRegions() {
 }
 
 // Called from WaveformDisplay.razor
-function addRegionToList(start, end, name) {
-    let regionInfo = {
-        'start': start,
-        'end': end,
-        'name': name
-    }
-    regionsToAdd.push(regionInfo)
+function addRegionList(waveformRegionModelsJson) {
+    regionsToAdd = JSON.parse(waveformRegionModelsJson)
 }
 
 // Called from WaveformDisplay.razor
@@ -167,14 +161,14 @@ function getRegionRanges() {
             "start": reg.start,
             "end": reg.end,
         }
-        if (reg.content !== undefined) {
+        if (reg.content.id !== "_gap") {
             regData["regionName"] = reg.content.innerText
         } else {
             regData["regionName"] = "_gap"
         }
         returnList.push(regData)
     })
-    return returnList;
+    return returnList
 }
 
 // Called from WaveformDisplay.razor

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using SoundFingerprinting;
 using SoundFingerprinting.Data;
 using SoundFingerprinting.InMemory;
@@ -48,5 +49,10 @@ public class InMemoryModelServiceAdapter : IFingerprintStorage
     public void DeleteTrackById(string trackId)
     {
         _modelService.DeleteTrack(trackId);
+    }
+
+    public int Count()
+    {
+        return _modelService.GetTrackIds().Count();
     }
 }

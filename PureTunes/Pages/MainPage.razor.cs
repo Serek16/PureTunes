@@ -22,12 +22,15 @@ public partial class MainPageComponent
 
     protected List<ResultEntry> ResultList = new();
 
+    private static string[] _audioExtensions = { ".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma", ".m4a", ".mp4" };
+
     private async Task FindMatches()
     {
         IsFingerprintingAndMatching = true;
+        var time0 = DateTime.Now;
         try
         {
-            if (!(await AfmService.ReadAllLoadedTracks()).Any())
+            if (!await AfmService.AnyTracks())
             {
                 Logger.LogError(
                     "Emy Sound database is empty. Please provide at least one track.");
@@ -42,7 +45,7 @@ public partial class MainPageComponent
             Logger.LogError($"Can't start the task. {e.Message}");
             NotificationService.Notify(new NotificationMessage
             {
-                Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Nie można połączyć się Dockerem!"
+                Duration = 10000, Severity = NotificationSeverity.Error, Summary = "Nie można połączyć się Dockerem!"
             });
 
             return;
@@ -53,18 +56,15 @@ public partial class MainPageComponent
             return;
         }
 
-        Logger.LogInformation("Started processing files.");
         NotificationService.Notify(new NotificationMessage
             { Duration = 1000, Severity = NotificationSeverity.Success, Summary = "Rozpoczęto procesowanie plików!" });
 
-
-        var time0 = DateTime.Now;
         ResultList = await AfmService.FindMatches(FilePath, Confidence / 100d);
         await RenderResultWaveform(FilePath);
         var timeSpan = DateTime.Now.Subtract(time0);
 
-        Logger.LogInformation("The matching process has been successfully completed in {TimeSpan} seconds.",
-            timeSpan.ToString("ss'.'ff"));
+        Logger.LogInformation("The matching process has been successfully completed in {TimeSpan}.",
+            timeSpan.ToString(@"mm\:ss\.ff"));
         NotificationService.Notify(new NotificationMessage
             { Duration = 1000, Severity = NotificationSeverity.Success, Summary = "Wygenerowano rezultat!" });
 
@@ -131,12 +131,11 @@ public partial class MainPageComponent
         }
 
         var examinedFileList = new List<PathModel>();
-
-        foreach (var file in Directory.GetFiles(_examinedFileDirectoryPath).ToList())
+        foreach (var filePath in Directory.GetFiles(_examinedFileDirectoryPath).ToList())
         {
-            if (Path.GetExtension(file) == ".wav")
+            if(_isAudioFile(filePath))
             {
-                examinedFileList.Add(new PathModel(file));
+                examinedFileList.Add(new PathModel(filePath));
             }
         }
 
@@ -145,30 +144,24 @@ public partial class MainPageComponent
 
     private async Task<bool> IsFilePathCorrect(string filePath)
     {
-        if (File.Exists(filePath))
+        if (File.Exists(filePath) && _isAudioFile(filePath))
         {
-            if (Path.GetExtension(filePath) == ".wav")
-            {
-                Logger.LogInformation($"File \"{filePath}\" is correct.");
-                NotificationService.Notify(new NotificationMessage
-                    { Duration = 1000, Severity = NotificationSeverity.Success, Summary = "Plik poprawny!" });
-
-                return true;
-            }
-
-            Logger.LogError($"File \"{filePath}\" doesn't have correct format The file needs to be in WAV format.");
+            Logger.LogInformation($"File \"{filePath}\" is correct.");
             NotificationService.Notify(new NotificationMessage
-            {
-                Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Niepoprawne rozszerzenie pliku!"
-            });
+                { Duration = 1000, Severity = NotificationSeverity.Success, Summary = "Plik poprawny!" });
+
+            return true;
         }
-        else
-        {
-            Logger.LogError($"File \"{filePath}\" doesn't exist");
-            NotificationService.Notify(new NotificationMessage
-                { Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Plik nie istnieje!" });
-        }
+        Logger.LogError($"File \"{filePath}\" doesn't exist");
+        NotificationService.Notify(new NotificationMessage
+            { Duration = 1000, Severity = NotificationSeverity.Error, Summary = "Plik nie istnieje!" });
 
         return false;
+    }
+
+    private static bool _isAudioFile(string filePath)
+    {
+        var fileExtension = Path.GetExtension(filePath).ToLower();
+        return Array.Exists(_audioExtensions, extension => extension == fileExtension);
     }
 }

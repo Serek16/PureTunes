@@ -15,4 +15,6 @@ public interface IFingerprintStorage
     IModelService GetModel();
 
     void DeleteTrackById(string trackId);
+
+    int Count();
 }
