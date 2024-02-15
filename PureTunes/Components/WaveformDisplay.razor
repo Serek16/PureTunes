@@ -42,20 +42,13 @@
             var audioUrl = $"/audio/{encodedPath}";
             await JS.InvokeVoidAsync("initializeWaveform", audioUrl, AudioPeaks);
 
-            foreach (var waveformRegionModel in WaveformRegionModels)
+            var camelCasePolicy = new JsonSerializerOptions
             {
-                AddRegion(waveformRegionModel);
-            }
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+            var waveformRegionModelsJson = System.Text.Json.JsonSerializer.Serialize(WaveformRegionModels, camelCasePolicy);
+            await JS.InvokeVoidAsync("addRegionList", waveformRegionModelsJson);
         }
-    }
-
-    private void AddRegion(WaveformRegionModel waveformRegionModel)
-    {
-        JS.InvokeVoidAsync(
-            "addRegionToList",
-            waveformRegionModel.Start,
-            waveformRegionModel.End,
-            waveformRegionModel.RegionName);
     }
 
     public async Task<List<WaveformRegionModel>> GetWaveformRegionList()

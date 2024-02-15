@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using System.Linq;
+using PureTunes.Exceptions;
 using SoundFingerprinting.Data;
 
 namespace PureTunes.Pages;
@@ -22,7 +23,16 @@ public partial class TrackListPageComponent
     {
         TrackList.Clear();
         FingerprintStorage.DeleteAllTracks();
-        DataGrid.Reload();
+        TrackInfoDataGrid.Reload();
+    }
+
+    private void RemoveTracksFromSinglePage()
+    {
+        foreach (var trackInfo in TrackInfoDataGrid.View)
+        {
+            FingerprintStorage.DeleteTrackById(trackInfo.Id);
+        }
+        TrackInfoDataGrid.Reload();
     }
 
     private void RemoveSpecificTrack(TrackInfo trackInfo)
@@ -34,14 +44,14 @@ public partial class TrackListPageComponent
 
         TrackList.Remove(trackInfo);
         FingerprintStorage.DeleteTrackById(trackInfo.Id);
-        DataGrid.Reload();
+        TrackInfoDataGrid.Reload();
     }
 
     protected void HandleTracksAdded()
     {
         TrackList = FingerprintStorage.GetAllTracks().ToList();
-        DataGrid.Data = TrackList;
-        DataGrid.Reload();
+        TrackInfoDataGrid.Data = TrackList;
+        TrackInfoDataGrid.Reload();
     }
 
     protected void ResetIndex(bool shouldReset)

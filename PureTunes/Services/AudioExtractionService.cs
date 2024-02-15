@@ -66,32 +66,51 @@ public class AudioExtractionService
     {
         waveformRegionList = waveformRegionList.OrderBy(r => r.Start).ToList();
         _intervalsToCut = new List<ConvertModel>();
+
+        double lastEnd = 0; // Track the end of the last interval to know where the next one should start
+
         foreach (var region in waveformRegionList)
         {
-            if (_intervalsToCut.Any()
-                && region.Start <= _intervalsToCut.Last().CommercialEnd
-                && region.End > _intervalsToCut.Last().CommercialEnd)
+            // Check if the current region overlaps with the last interval
+            if (_intervalsToCut.Any() && region.Start <= _intervalsToCut.Last().CommercialEnd)
             {
-                _intervalsToCut.Last().CommercialEnd = region.End;
-                continue;
+                // Extend the last interval if the current region ends after the last interval
+                if (region.End > _intervalsToCut.Last().CommercialEnd)
+                {
+                    _intervalsToCut.Last().CommercialEnd = region.End;
+                }
+                // If the current region is completely inside the last interval, no further action is needed
+            }
+            else
+            {
+                // Add a new interval that starts from the end of the last interval (or 0 if it's the first one)
+                // and ends at the start of the current region. This covers the gap before the current region.
+                // Then, use the end of the current region as the "CommercialEnd" for cutting purposes.
+                var newInterval = new ConvertModel
+                {
+                    Start = lastEnd,
+                    End = region.Start,
+                    CommercialEnd = region.End
+                };
+
+                _intervalsToCut.Add(newInterval);
             }
 
-            _intervalsToCut.Add(new ConvertModel
-            {
-                Start = _intervalsToCut.Any() ? _intervalsToCut.Last().CommercialEnd : 0,
-                End = region.Start,
-                CommercialEnd = region.End
-            });
+            // Update lastEnd to ensure it's always at the end of the last processed region
+            // This helps in creating the next interval correctly without overlaps or gaps
+            lastEnd = Math.Max(lastEnd, region.End);
         }
 
-        _intervalsToCut.Add(new ConvertModel
+        // Optionally, you might want to add a final interval to cover any remaining content after the last region
+        if (lastEnd < queryLength)
         {
-            Start = _intervalsToCut.Last().CommercialEnd,
-            End = queryLength
-        });
-
-        // In case when the first region starts at 0 or the last one ends at the end of the query, the code simply
-        // doesn't work (probably other cases too).
+            _intervalsToCut.Add(new ConvertModel
+            {
+                Start = lastEnd,
+                End = queryLength,
+                CommercialEnd = queryLength // Assuming you want to cut until the very end of the content
+            });
+        }
     }
 
     public async Task FileGenerate(string fileToCutPath)
@@ -124,11 +143,16 @@ public class AudioExtractionService
 
         CloseAudioFiles(finalAudioParts);
 
+        foreach (var item in _intervalsToCut)
+        {
+            File.Delete(directoryPath + "\\" + _intervalsToCut.IndexOf(item) + ".wav");
+        }
+
         _logger.LogInformation("The result has been generated and saved to file result.wav.");
     }
 
     private async Task CutAudioFiles(ConvertModel item, string outputFileName, string outputDirPath,
-        IMediaInfo mediaInfo)
+        IMediaInfo inputFileMediaInfo)
     {
         var startTime = TimeSpan.FromSeconds(item.Start);
         var endTime = TimeSpan.FromSeconds(item.End);
@@ -139,7 +163,7 @@ public class AudioExtractionService
             outputFileName + ".wav");
 
         await Xabe.FFmpeg.FFmpeg.Conversions.New()
-            .AddStream(mediaInfo.Streams)
+            .AddStream(inputFileMediaInfo.Streams)
             .AddParameter(
                 $"-ss {startTime} -t {endTime.Subtract(startTime)}")
             .SetOutput(outputDirPath + "\\" + outputFileName + ".wav")
