@@ -1,11 +1,19 @@
 ﻿# PureTunes: Radio Ad Removal Tool
 
-PureTunes is a C# .NET application designed to remove specific advertisements from
+PureTunes is a C# .NET application designed to remove specific advertisements from 
 radio broadcasts using audio fingerprinting. The program removes ads from a provided 
-audio file of a radio broadcast. Utilizing the technique of audio fingerprinting 
-through the powerful [soundfingerprinting](https://github.com/AddictedCS/soundfingerprinting)
-library, the tool can identify ads that are also supplied in the form of audio files 
-and eliminate them.
+audio file of a radio broadcast by utilizing the technique of audio fingerprinting 
+through the powerful [soundfingerprinting](https://github.com/AddictedCS/soundfingerprinting) 
+library.
+
+![ui-main-fingerprinted](https://github.com/Serek16/PureTunes/assets/50013854/407b25a7-9f7a-46b8-86ff-d88724b4cfd2)
+
+## How it Works
+
+PureTunes works by comparing the audio fingerprints of the provided radio broadcast 
+with those of the supplied advertisement audio files. Once identified, the tool 
+eliminates the ads seamlessly from the broadcast audio, providing an uninterrupted 
+listening experience.
 
 ## Requirements
 
@@ -13,7 +21,7 @@ and eliminate them.
 - Docker (for running the `soundfingerprinting.emy` container)
 - FFmpeg binaries. Recommended: [ffmpeg-5.1.2-full_build-shared](https://github.com/GyanD/codexffmpeg/releases/download/5.1.2/ffmpeg-5.1.2-full_build-shared.7z) 
 
-## Installation and Running
+## Installation and Usage
 
 1. **Clone the Repository and navigate to the Root Directory:**
    ```bash
